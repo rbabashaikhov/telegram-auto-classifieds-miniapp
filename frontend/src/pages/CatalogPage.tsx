@@ -17,11 +17,12 @@ export function CatalogPage() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const set = (key: keyof ListingFilters, value: string) => setDraft((current) => ({ ...current, [key]: value || undefined }));
 
   useEffect(() => { api.getVehicleBrands().then(setBrands); api.getListingFavorites().then((items) => setFavorites(new Set(items.map((x) => x.id)))).catch(() => undefined); }, []);
   useEffect(() => { api.getVehicleModels(draft.brand).then(setModels); }, [draft.brand]);
-  useEffect(() => { setLoading(true); api.getListings(filters).then(setListings).finally(() => setLoading(false)); }, [filters]);
+  useEffect(() => { setLoading(true); setError(''); api.getListings(filters).then(setListings).catch(() => { setListings([]); setError('Не удалось загрузить каталог. Обновите страницу и попробуйте снова.'); }).finally(() => setLoading(false)); }, [filters]);
 
   const toggleFavorite = async (id: number) => {
     const active = favorites.has(id);
@@ -33,19 +34,19 @@ export function CatalogPage() {
   return (
     <main className="page catalog-page">
       <section className="hero" data-tour="home-cta">
-        <p className="eyebrow">AutoMarket Demo</p>
+        <p className="eyebrow">Каталог автомобилей</p>
         <h1>Автомобили с понятными характеристиками</h1>
         <p>Найдите подходящий вариант в каталоге демонстрационных объявлений.</p>
       </section>
       <div className="catalog-toolbar">
         <button className="filter-toggle" type="button" onClick={() => setFiltersOpen(!filtersOpen)}>Фильтры</button>
         <Select label="Сортировка" value={draft.sort} onChange={(value) => { set('sort', value); setFilters((current) => ({ ...current, sort: value as ListingFilters['sort'] })); }}>
-          <option value="newest">Сначала новые</option><option value="price_asc">Сначала дешевле</option><option value="price_desc">Сначала дороже</option><option value="year_desc">Свежее год</option><option value="mileage_asc">Меньше пробег</option>
+          <option value="newest">Сначала новые</option><option value="price_asc">Сначала дешевле</option><option value="price_desc">Сначала дороже</option><option value="year_desc">Сначала новее по году</option><option value="mileage_asc">Сначала с меньшим пробегом</option>
         </Select>
       </div>
       <div className="catalog-layout">
         <aside className={`filters ${filtersOpen ? 'is-open' : ''}`}>
-          <div className="filters-head"><h2>Фильтры</h2><button type="button" onClick={() => setFiltersOpen(false)}>×</button></div>
+          <div className="filters-head"><h2>Фильтры</h2><button type="button" aria-label="Закрыть фильтры" onClick={() => setFiltersOpen(false)}>×</button></div>
           <Select label="Марка" value={draft.brand} onChange={(value) => { setDraft((x) => ({ ...x, brand: value || undefined, model: undefined })); }}><option value="">Все марки</option>{brands.map((x) => <option key={x.id} value={x.slug}>{x.name}</option>)}</Select>
           <Select label="Модель" value={draft.model} onChange={(value) => set('model', value)}><option value="">Все модели</option>{models.map((x) => <option key={x.id} value={x.slug}>{x.name}</option>)}</Select>
           <div className="field-pair"><label><span>Цена от</span><input inputMode="numeric" value={draft.priceMin ?? ''} onChange={(e) => set('priceMin', e.target.value)} /></label><label><span>до</span><input inputMode="numeric" value={draft.priceMax ?? ''} onChange={(e) => set('priceMax', e.target.value)} /></label></div>
@@ -62,8 +63,9 @@ export function CatalogPage() {
         {filtersOpen && <button className="drawer-backdrop" aria-label="Закрыть фильтры" onClick={() => setFiltersOpen(false)} />}
         <section className="catalog-results">
           <h2>{loading ? 'Загрузка…' : `Найдено: ${listings.length}`}</h2>
+          {error && <div className="empty-state error-state" role="alert">{error}</div>}
           <div className="listing-grid">{listings.map((item) => <ListingCard key={item.id} listing={item} favorite={favorites.has(item.id)} onFavorite={toggleFavorite} />)}</div>
-          {!loading && listings.length === 0 && <div className="empty-state">По этим параметрам ничего не найдено.</div>}
+          {!loading && !error && listings.length === 0 && <div className="empty-state">По этим параметрам ничего не найдено. Измените фильтры или сбросьте их.</div>}
         </section>
       </div>
     </main>

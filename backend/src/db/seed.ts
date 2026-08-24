@@ -94,6 +94,8 @@ export function seed(database: Database.Database, now = new Date('2026-08-18T12:
   const ownedListings = database.prepare('SELECT id,status FROM listings WHERE user_id=? ORDER BY id').all(ownerId) as Array<{ id: number; status: string }>;
   const standardId = Number((database.prepare("SELECT id FROM tariffs WHERE code='standard'").get() as { id: number }).id);
   const seedStates = ['pending', 'paid', 'paid', 'failed'] as const;
+  const seededPaymentByKey = database.prepare('SELECT id FROM payments WHERE idempotency_key=?');
+  const updateDemoConfirmation = database.prepare('UPDATE payments SET confirmation_url=? WHERE id=?');
   ownedListings.slice(0, 4).forEach((listing, index) => {
     const status = seedStates[index];
     const timestamp = new Date(now.getTime() + (index + 10) * 60_000).toISOString();
@@ -104,6 +106,8 @@ export function seed(database: Database.Database, now = new Date('2026-08-18T12:
         `/payments/seed-${listing.id}/demo`, `seed-payment-${listing.id}`, JSON.stringify({ demo: true }), timestamp, timestamp,
         status === 'paid' ? timestamp : null, status === 'failed' ? timestamp : null, null,
       );
+    const paymentId = Number((seededPaymentByKey.get(`seed-payment-${listing.id}`) as { id: number }).id);
+    updateDemoConfirmation.run(`/payments/${paymentId}/demo`, paymentId);
   });
   const rejected = ownedListings.find((listing) => listing.status === 'rejected');
   if (rejected) {
@@ -114,5 +118,7 @@ export function seed(database: Database.Database, now = new Date('2026-08-18T12:
         ownerId, rejected.id, standardId, `demo-seed-cancelled-${rejected.id}`, `/payments/seed-cancelled-${rejected.id}/demo`,
         `seed-payment-cancelled-${rejected.id}`, JSON.stringify({ demo: true }), timestamp, timestamp, timestamp,
       );
+    const paymentId = Number((seededPaymentByKey.get(`seed-payment-cancelled-${rejected.id}`) as { id: number }).id);
+    updateDemoConfirmation.run(`/payments/${paymentId}/demo`, paymentId);
   }
 }

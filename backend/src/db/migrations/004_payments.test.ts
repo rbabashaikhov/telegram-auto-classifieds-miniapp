@@ -32,6 +32,9 @@ describe('004 payments migration', () => {
     expect((db.prepare("SELECT name FROM schema_migrations WHERE id=4").get() as { name: string }).name).toBe('004_payments');
     expect((db.prepare('SELECT COUNT(*) count FROM payments').get() as { count: number }).count).toBe(paymentsBefore);
     expect((db.prepare('SELECT COUNT(*) count FROM payments p JOIN listings l ON l.id=p.listing_id WHERE l.user_id IS NULL OR l.user_id<>p.customer_id').get() as { count: number }).count).toBe(0);
+    const demoPayments = db.prepare("SELECT id,confirmation_url FROM payments WHERE provider='demo'").all() as Array<{ id: number; confirmation_url: string }>;
+    expect(demoPayments.length).toBeGreaterThan(0);
+    expect(demoPayments.every((payment) => payment.confirmation_url === `/payments/${payment.id}/demo`)).toBe(true);
     db.close();
   });
 });

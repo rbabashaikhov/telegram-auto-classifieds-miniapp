@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom';
 import { formatPrice } from '../lib/format';
+import { vehicleLabel } from '../lib/automotiveLabels';
 import type { Listing } from '../types';
-
-const labels: Record<string, string> = { automatic: 'Автомат', manual: 'Механика', robot: 'Робот', variator: 'Вариатор', petrol: 'Бензин', diesel: 'Дизель' };
 
 export function ListingCard({ listing, favorite, onFavorite }: { listing: Listing; favorite: boolean; onFavorite: (id: number) => void }) {
   return (
@@ -18,8 +17,8 @@ export function ListingCard({ listing, favorite, onFavorite }: { listing: Listin
         <strong className="listing-price">{formatPrice(listing.price)}</strong>
         <div className="chips">
           <span>{listing.year}</span><span>{listing.mileage.toLocaleString('ru-RU')} км</span>
-          <span>{listing.engineVolume} л · {labels[listing.engineType] ?? listing.engineType}</span>
-          <span>{labels[listing.transmission] ?? listing.transmission}</span>
+          <span>{listing.engineVolume} л · {vehicleLabel(listing.engineType)}</span>
+          <span>{vehicleLabel(listing.transmission)}</span>
         </div>
         <p className="listing-city">{listing.city}</p>
       </Link>

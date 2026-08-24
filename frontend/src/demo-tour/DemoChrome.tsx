@@ -17,7 +17,7 @@ export function DemoChrome({ showTour, showAdmin, onStartTour }: DemoChromeProps
       )}
       {showAdmin && (
         <Link className="demo-chrome-cta" to="/demo/admin">
-          Админка
+          Кабинет администратора
         </Link>
       )}
     </div>

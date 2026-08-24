@@ -21,7 +21,7 @@ export default function App() {
   return (
     <div className={isAdmin ? undefined : 'app-shell'}>
       {showDemoChrome && <DemoChrome showTour={false} showAdmin={business.features.demoAdminPreview} onStartTour={() => undefined} />}
-      {!isAdmin && <header className="site-header"><Link to="/" className="site-brand"><span>AM</span>AutoMarket Demo</Link><nav className="header-links"><Link to="/favorites">♡ Избранное</Link><Link to="/my/listings">Мои объявления</Link></nav></header>}
+      {!isAdmin && <header className="site-header"><Link to="/" className="site-brand"><span>AM</span>{business.appTitle}</Link><nav className="header-links"><Link to="/favorites">♡ Избранное</Link><Link to="/my/listings">Мои объявления</Link></nav></header>}
       <Routes>
         <Route path="/" element={<CatalogPage />} />
         <Route path="/listings/:id" element={<ListingDetailsPage />} />
