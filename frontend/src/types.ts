@@ -6,6 +6,8 @@ export interface AppConfig {
   appDescription: string;
   timezone: string;
   demoMode: boolean;
+  paymentProvider: 'demo' | 'external';
+  demoPaymentsEnabled: boolean;
   adminProtected: boolean;
   currency: string;
   currencySymbol: string;
@@ -44,8 +46,13 @@ export interface Listing {
 }
 
 export interface ModerationEvent { id: number; listingId: number; action: string; reason: string | null; adminIdentifier: string | null; createdAt: string }
-export interface SellerListing extends Listing { moderationHistory: ModerationEvent[] }
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled';
+export interface Tariff { id: number; code: string; name: string; description: string; priceMinor: number; currency: string; durationDays: number; active: boolean; displayOrder: number; createdAt: string; updatedAt: string }
+export interface PaymentEvent { id: number; paymentId: number; provider: string; providerEventId: string; status: PaymentStatus; metadata: Record<string, unknown> | null; createdAt: string }
+export interface Payment { id: number; customerId: number; listingId: number; tariffId: number; provider: string; providerPaymentId: string | null; amountMinor: number; currency: string; status: PaymentStatus; confirmationUrl: string | null; idempotencyKey: string; createdAt: string; updatedAt: string; paidAt: string | null; failedAt: string | null; cancelledAt: string | null; tariff: Tariff; events: PaymentEvent[] }
+export interface SellerListing extends Listing { moderationHistory: ModerationEvent[]; payment: Payment | null }
 export interface AdminListing extends Listing { owner: { id: number; name: string; username: string | null } | null; moderationHistory: ModerationEvent[] }
+export interface AdminPayment extends Payment { listing: { id: number; title: string } | null; customer: { id: number; name: string; username: string | null } | null }
 export interface ListingInput {
   brandId: number; modelId: number; year: number; price: number; mileage: number; bodyType: string;
   transmission: string; driveType: string; engineType: string; engineVolume: number; color: string;

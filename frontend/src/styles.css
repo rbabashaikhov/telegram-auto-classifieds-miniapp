@@ -117,9 +117,19 @@ td a { color: var(--accent); font-weight: 700; }
 .admin-detail-wide { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); align-items: start; }.admin-specs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }.admin-specs div { padding: 10px; border-radius: 8px; background: #f5f7fa; }.admin-specs dt { color: #64748b; font-size: 12px; }.admin-specs dd { margin: 4px 0 0; font-weight: 700; }
 .moderation-panel { padding: 18px; border-radius: 12px; background: #f8fafc; }.moderation-panel h2 { margin: 18px 0 8px; font-size: 17px; }.moderation-panel h2:first-child { margin-top: 0; }.history-event { display: grid; grid-template-columns: 1fr auto; gap: 4px; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }.history-event span, .moderation-panel small, .muted { color: #64748b; font-size: 12px; }.history-event p { grid-column: 1/-1; margin: 3px 0; color: #991b1b; font-size: 13px; }
 .moderation-actions { display: grid; gap: 12px; margin-top: 20px; }.moderation-actions .form-error { margin: 0; }.approve-button { background: #15803d; }.reject-button { min-height: 42px; border: 1px solid #fecaca; border-radius: 9px; background: #fff; color: #b91c1c; font-weight: 750; }
+.tariff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; }
+.tariff-card { display: grid; gap: 7px; padding: 18px; border: 2px solid #e1e6ed; border-radius: 14px; background: white; text-align: left; }
+.tariff-card.is-selected { border-color: var(--accent); background: #eff6ff; }
+.tariff-card b { color: var(--accent); font-size: 22px; }.tariff-card span, .tariff-card small { color: #64748b; }
+.payment-state { display: inline-flex; width: max-content; margin-left: 7px; padding: 5px 8px; border-radius: 8px; background: #eef2f7; color: #475569; font-size: 12px; font-weight: 700; }
+.payment-paid { background: #dcfce7; color: #166534; }.payment-pending { background: #fef3c7; color: #92400e; }.payment-failed { background: #fee2e2; color: #991b1b; }.payment-cancelled { background: #f1f5f9; color: #475569; }
+.payment-step > .primary-button { width: max-content; }.payment-success, .payment-result { display: grid; gap: 15px; justify-items: start; padding: 20px; border-radius: 14px; background: #f0fdf4; color: #166534; }
+.demo-checkout { padding-top: 20px; }.checkout-card { display: grid; gap: 18px; padding: 32px; border: 1px solid #e1e6ed; border-radius: 20px; background: white; box-shadow: 0 12px 40px #1720330d; }.checkout-card h1 { margin: 0; }.checkout-amount { margin: 0; font-size: 36px; font-weight: 850; }.checkout-summary { display: grid; gap: 4px; padding: 14px; border-radius: 10px; background: #f8fafc; }.checkout-summary span { color: #64748b; }.checkout-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }.checkout-actions button { min-height: 44px; border: 1px solid #d8dee8; border-radius: 10px; background: white; font-weight: 700; }.checkout-actions .primary-button { background: var(--accent); color: white; }
+.admin-nav { display: flex; gap: 18px; }.payment-admin-detail { grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); }.wrap-value { overflow-wrap: anywhere; white-space: normal; }.cabinet-error { margin: 0 0 16px; }
 
 @media (max-width: 1100px) { .listing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 767px) {
+  .tariff-grid { grid-template-columns: 1fr; }.checkout-actions { grid-template-columns: 1fr; }.payment-admin-detail { grid-template-columns: 1fr; }
   .page, .site-header { width: min(100% - 24px, 680px); }
   .site-header { height: 60px; }.header-links { display: none; }
   .hero { padding: 30px 20px; border-radius: 18px; }.hero p:last-child { font-size: 15px; }
@@ -136,6 +146,7 @@ td a { color: var(--accent); font-weight: 700; }
   .page-title-row { align-items: flex-start; }.my-listing { grid-template-columns: 120px minmax(0, 1fr); }.my-listing > img { width: 120px; height: 90px; }.my-listing-actions { grid-column: 1/-1; grid-template-columns: repeat(2, 1fr); min-width: 0; }.form-step { min-height: 390px; padding: 24px 20px; }.editor-footer { padding: 16px 20px; }.admin-gallery { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 420px) {
+  .checkout-card { padding: 20px; }.admin-header { display: grid; gap: 12px; }.admin-nav { flex-wrap: wrap; }
   .listing-grid { grid-template-columns: 1fr; }.listing-card { display: grid; grid-template-columns: 42% minmax(0, 1fr); }.listing-image-wrap { height: 100%; aspect-ratio: auto; }.favorite-button { right: auto; left: calc(42% - 42px); width: 34px; height: 34px; font-size: 20px; }
   .details-layout { display: grid; }.favorite-detail { width: 100%; }.contact-card .primary-button { width: 100%; }.demo-chrome { padding-inline: 10px; }
   .page-title-row { display: grid; }.page-title-row .primary-button { width: 100%; }.my-listing { grid-template-columns: 92px minmax(0, 1fr); padding: 10px; gap: 11px; }.my-listing > img { width: 92px; height: 78px; }.my-listing-main h2 { font-size: 16px; }.my-listing-main p { display: none; }.my-listing-actions { grid-template-columns: 1fr; }.form-grid { grid-template-columns: 1fr; }.photo-editor-grid { grid-template-columns: repeat(2, 1fr); }.editor-footer .primary-button { width: 100%; }.admin-detail-wide { padding: 12px; }.admin-specs { grid-template-columns: 1fr; }

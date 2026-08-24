@@ -2,6 +2,7 @@ import type { AutomotiveProviders, Listing, ListingStatus, ListingWriteInput } f
 import { AppError } from '../errors.js';
 import type { FileStorage, FileUpload } from '../providers/fileStorage.js';
 import { MAX_LISTING_PHOTOS } from '../providers/local/fileStorage.js';
+import type { PaymentRepository } from '../payments.js';
 
 function ownListing(data: AutomotiveProviders, customerId: number, id: number): Listing {
   const listing = data.sellerListings.getByOwner(id, customerId);
@@ -38,12 +39,13 @@ export function updateSellerListing(data: AutomotiveProviders, customerId: numbe
   return updated;
 }
 
-export function submitSellerListing(data: AutomotiveProviders, customerId: number, id: number) {
+export function submitSellerListing(data: AutomotiveProviders, payments: PaymentRepository, customerId: number, id: number) {
   const listing = ownListing(data, customerId, id);
   if (!(['draft', 'rejected'] as ListingStatus[]).includes(listing.status)) {
     throw new AppError('Only draft or rejected listings can be submitted', 409, 'INVALID_LISTING_STATUS');
   }
   if (data.sellerListings.photoCount(id) < 1) throw new AppError('At least one photo is required', 400, 'PHOTO_REQUIRED');
+  if (!payments.paidForListing(id)) throw new AppError('Payment is required before moderation', 402, 'PAYMENT_REQUIRED');
   const updated = data.sellerListings.setStatus(id, 'pending_moderation');
   data.moderation.add(id, 'submitted');
   return updated;

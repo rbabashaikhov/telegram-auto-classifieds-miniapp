@@ -1,4 +1,5 @@
 import type { Customer, TelegramUser } from './types.js';
+import type { PaymentRepository } from './payments.js';
 
 export const LISTING_STATUSES = ['draft', 'pending_moderation', 'published', 'rejected', 'archived'] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
@@ -59,6 +60,7 @@ export interface ListingWriteInput {
 export interface StoredPhotoInput { url: string; storageKey: string; mimeType: string; sizeBytes: number }
 
 export interface AutomotiveProviders {
+  payments: PaymentRepository;
   customers: {
     upsert(user: TelegramUser): { customer: Customer; created: boolean };
     getById(id: number): Customer | undefined;

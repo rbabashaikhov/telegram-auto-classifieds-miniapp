@@ -8,6 +8,7 @@ import type { FileStorage } from '../providers/fileStorage.js';
 import { ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_SIZE_BYTES, MAX_LISTING_PHOTOS } from '../providers/local/fileStorage.js';
 import { addSellerPhotos, archiveSellerListing, createSellerListing, removeSellerPhoto, sellerListingDetails, submitSellerListing, updateSellerListing } from '../services/sellerListings.js';
 import { asyncHandler, mountErrorHandler, ok, parseId } from './helpers.js';
+import type { PaymentRepository } from '../payments.js';
 
 export const listingInputSchema = z.object({
   brandId: z.number().int().positive(), modelId: z.number().int().positive(),
@@ -36,14 +37,17 @@ function customerId(req: Request, data: AutomotiveProviders): number {
   return data.customers.upsert(requireAuth(req).telegramUser).customer.id;
 }
 
-export function createSellerListingsRouter(data: AutomotiveProviders, storage: FileStorage, authenticate: RequestHandler = authMiddleware): Router {
+export function createSellerListingsRouter(data: AutomotiveProviders, storage: FileStorage, authenticate: RequestHandler = authMiddleware, payments: PaymentRepository = data.payments): Router {
   const router = Router();
   router.use('/me/listings', authenticate);
-  router.get('/me/listings', (req, res) => ok(res, data.sellerListings.listByOwner(customerId(req, data))));
-  router.get('/me/listings/:id', (req, res) => ok(res, sellerListingDetails(data, customerId(req, data), parseId(req.params.id))));
+  router.get('/me/listings', (req, res) => ok(res, data.sellerListings.listByOwner(customerId(req, data)).map((listing) => ({ ...listing, payment: payments.latestForListing(listing.id) ?? null }))));
+  router.get('/me/listings/:id', (req, res) => {
+    const listing = sellerListingDetails(data, customerId(req, data), parseId(req.params.id));
+    ok(res, { ...listing, payment: payments.latestForListing(listing.id) ?? null });
+  });
   router.post('/me/listings', (req, res) => ok(res, createSellerListing(data, customerId(req, data), listingInputSchema.parse(req.body)), 201));
   router.patch('/me/listings/:id', (req, res) => ok(res, updateSellerListing(data, customerId(req, data), parseId(req.params.id), listingInputSchema.parse(req.body))));
-  router.post('/me/listings/:id/submit', (req, res) => ok(res, submitSellerListing(data, customerId(req, data), parseId(req.params.id))));
+  router.post('/me/listings/:id/submit', (req, res) => ok(res, submitSellerListing(data, payments, customerId(req, data), parseId(req.params.id))));
   router.post('/me/listings/:id/archive', (req, res) => ok(res, archiveSellerListing(data, customerId(req, data), parseId(req.params.id))));
   router.post('/me/listings/:id/photos', uploadImages, asyncHandler(async (req, res) => {
     const files = (req.files as Express.Multer.File[] | undefined) ?? [];

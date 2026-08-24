@@ -20,6 +20,7 @@ export type DataModeName = 'local';
 export type CrmAdapterName = 'local' | 'external' | 'mock';
 export type PropertyAdapterName = 'local' | 'external';
 export type EventAdapterName = 'local' | 'webhook' | 'mock';
+export type PaymentProviderName = 'demo' | 'external';
 
 function dataModeName(value: string | undefined): DataModeName {
   if (value === 'local') return value;
@@ -41,6 +42,10 @@ function eventAdapterName(value: string | undefined): EventAdapterName {
   return 'local';
 }
 
+function paymentProviderName(value: string | undefined): PaymentProviderName {
+  return value === 'demo' ? 'demo' : 'external';
+}
+
 export const config = {
   nodeEnv,
   isProduction: nodeEnv === 'production',
@@ -52,6 +57,8 @@ export const config = {
   uploadsDir: process.env.UPLOADS_DIR || path.join(process.cwd(), 'data', 'uploads', 'listings'),
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
   allowDemoMode: process.env.ALLOW_DEMO_MODE === 'true',
+  paymentProvider: paymentProviderName(process.env.PAYMENT_PROVIDER),
+  allowDemoPayments: boolEnv(process.env.ALLOW_DEMO_PAYMENTS, process.env.ALLOW_DEMO_MODE === 'true'),
   timezone: process.env.TZ || 'Europe/Moscow',
   dataMode: dataModeName(process.env.DATA_MODE),
   crmAdapter: crmAdapterName(process.env.CRM_ADAPTER),
@@ -100,6 +107,8 @@ export function publicAppConfig() {
     appDescription: config.business.description,
     timezone: config.timezone,
     demoMode: config.allowDemoMode,
+    paymentProvider: config.paymentProvider,
+    demoPaymentsEnabled: config.paymentProvider === 'demo' && config.allowDemoPayments && config.allowDemoMode,
     adminProtected: Boolean(config.admin.token),
     currency: config.business.currency,
     currencySymbol: config.business.currencySymbol,

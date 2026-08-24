@@ -8,6 +8,7 @@ import { createApp } from '../index.js';
 import { createTestWorld } from '../test/harness.js';
 import { createAuthMiddleware } from '../middleware/auth.js';
 import { createSellerListingsRouter } from './sellerListings.js';
+import { DemoPaymentProvider } from '../providers/payments.js';
 
 class MemoryFileStorage implements FileStorage {
   files = new Map<string, Buffer>();
@@ -51,9 +52,15 @@ function input(providers: ReturnType<typeof createTestWorld>['providers']) {
 }
 
 async function createDraft() {
-  const world = createTestWorld(); const storage = new MemoryFileStorage(); const app = createApp(world.providers, storage);
+  const world = createTestWorld(); const storage = new MemoryFileStorage(); const app = createApp(world.providers, storage, world.providers.payments, new DemoPaymentProvider(), { demoEnabled: true });
   const created = await request(app).post('/api/me/listings').send(input(world.providers));
   return { ...world, storage, app, id: Number(created.body.data.id) };
+}
+
+async function pay(app: ReturnType<typeof createApp>, id: number) {
+  const tariffs = await request(app).get('/api/tariffs');
+  const created = await request(app).post(`/api/me/listings/${id}/payments`).set('idempotency-key', `seller-${id}`).send({ tariffId: tariffs.body.data[0].id });
+  await request(app).post(`/api/demo-payments/${created.body.data.id}/succeed`);
 }
 
 describe('seller listing workflow', () => {
@@ -67,6 +74,7 @@ describe('seller listing workflow', () => {
   it('lets the browser demo customer submit an owned listing', async () => {
     const { app, id, providers } = await createDraft();
     providers.sellerListings.addPhoto(id, { url: '/images/cars/car-1.svg', storageKey: 'seed', mimeType: 'image/png', sizeBytes: 10 });
+    await pay(app, id);
     const response = await request(app).post(`/api/me/listings/${id}/submit`);
     expect(response.status).toBe(200);
     expect(response.body.data.status).toBe('pending_moderation');
@@ -105,6 +113,7 @@ describe('seller listing workflow', () => {
   it('submits to moderation and rejects invalid lifecycle updates', async () => {
     const { app, id, providers } = await createDraft();
     providers.sellerListings.addPhoto(id, { url: '/images/cars/car-1.svg', storageKey: 'seed', mimeType: 'image/png', sizeBytes: 10 });
+    await pay(app, id);
     const submitted = await request(app).post(`/api/me/listings/${id}/submit`);
     expect(submitted.body.data.status).toBe('pending_moderation');
     expect((await request(app).get(`/api/listings/${id}`)).status).toBe(404);
@@ -114,6 +123,7 @@ describe('seller listing workflow', () => {
   it('publishes only after admin approval', async () => {
     const { app, id, providers } = await createDraft();
     providers.sellerListings.addPhoto(id, { url: '/images/cars/car-1.svg', storageKey: 'seed', mimeType: 'image/png', sizeBytes: 10 });
+    await pay(app, id);
     await request(app).post(`/api/me/listings/${id}/submit`);
     const approved = await request(app).post(`/api/admin/listings/${id}/approve`).set(admin());
     expect(approved.body.data.status).toBe('published');
@@ -123,6 +133,7 @@ describe('seller listing workflow', () => {
   it('stores rejection reason and allows edit plus resubmit', async () => {
     const { app, id, providers } = await createDraft();
     providers.sellerListings.addPhoto(id, { url: '/images/cars/car-1.svg', storageKey: 'seed', mimeType: 'image/png', sizeBytes: 10 });
+    await pay(app, id);
     await request(app).post(`/api/me/listings/${id}/submit`);
     await request(app).post(`/api/admin/listings/${id}/reject`).set(admin()).send({ reason: 'Добавьте фотографию салона.' });
     const owner = await request(app).get(`/api/me/listings/${id}`);
@@ -135,6 +146,7 @@ describe('seller listing workflow', () => {
   it('archives a published listing and removes it from public catalog', async () => {
     const { app, id, providers } = await createDraft();
     providers.sellerListings.addPhoto(id, { url: '/images/cars/car-1.svg', storageKey: 'seed', mimeType: 'image/png', sizeBytes: 10 });
+    await pay(app, id);
     await request(app).post(`/api/me/listings/${id}/submit`);
     await request(app).post(`/api/admin/listings/${id}/approve`).set(admin());
     expect((await request(app).post(`/api/me/listings/${id}/archive`)).body.data.status).toBe('archived');

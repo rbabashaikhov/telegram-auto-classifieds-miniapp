@@ -26,6 +26,16 @@ function slug(value: string): string {
 }
 
 export function seed(database: Database.Database, now = new Date('2026-08-18T12:00:00')): void {
+  const tariffs = [
+    ['basic', 'Базовый', 'Размещение на 7 дней', 29_900, 'RUB', 7, 10],
+    ['standard', 'Стандарт', 'Размещение на 30 дней', 59_900, 'RUB', 30, 20],
+    ['extended', 'Расширенный', 'Размещение на 60 дней', 99_900, 'RUB', 60, 30],
+  ] as const;
+  const insertTariff = database.prepare(`INSERT OR IGNORE INTO tariffs
+    (code,name,description,price_minor,currency,duration_days,active,display_order,created_at,updated_at)
+    VALUES (?,?,?,?,?,?,1,?,?,?)`);
+  tariffs.forEach((tariff) => insertTariff.run(...tariff, now.toISOString(), now.toISOString()));
+
   const existing = database.prepare('SELECT COUNT(*) AS count FROM listings').get() as { count: number };
   const insertBrand = database.prepare('INSERT OR IGNORE INTO vehicle_brands (name, slug) VALUES (?, ?)');
   const brandByName = database.prepare('SELECT id FROM vehicle_brands WHERE name = ?');
@@ -55,18 +65,17 @@ export function seed(database: Database.Database, now = new Date('2026-08-18T12:
     VALUES (?,?,?,?,?)`).run(demoTelegramId, 'Иван Петров', 'demo_client', now.toISOString(), now.toISOString());
   const ownerId = Number((database.prepare('SELECT id FROM customers WHERE telegram_user_id=?').get(demoTelegramId) as { id: number }).id);
   const owned = database.prepare('SELECT COUNT(*) AS count FROM listings WHERE user_id=?').get(ownerId) as { count: number };
-  if (owned.count > 0) return;
-
-  const toyotaBrand = database.prepare("SELECT id FROM vehicle_brands WHERE slug='toyota'").get() as { id: number };
-  const camryModel = database.prepare("SELECT id FROM vehicle_models WHERE brand_id=? AND slug='camry'").get(toyotaBrand.id) as { id: number };
-  const workflow = [
+  if (owned.count === 0) {
+    const toyotaBrand = database.prepare("SELECT id FROM vehicle_brands WHERE slug='toyota'").get() as { id: number };
+    const camryModel = database.prepare("SELECT id FROM vehicle_models WHERE brand_id=? AND slug='camry'").get(toyotaBrand.id) as { id: number };
+    const workflow = [
     { status: 'draft', year: 2016, price: 1_650_000, mileage: 126_000, city: 'Москва', description: 'Черновик объявления: автомобиль обслужен, подробности будут добавлены владельцем.' },
     { status: 'pending_moderation', year: 2020, price: 2_850_000, mileage: 67_000, city: 'Тверь', description: 'Объявление отправлено на проверку, автомобиль в хорошем демонстрационном состоянии.' },
     { status: 'published', year: 2019, price: 2_430_000, mileage: 88_000, city: 'Москва', description: 'Опубликованное объявление владельца с полной историей регулярного обслуживания.' },
     { status: 'rejected', year: 2018, price: 2_050_000, mileage: 101_000, city: 'Рязань', description: 'Демонстрационное объявление с причиной отклонения для повторного редактирования.' },
-  ] as const;
-  database.transaction(() => {
-    workflow.forEach((item, index) => {
+    ] as const;
+    database.transaction(() => {
+      workflow.forEach((item, index) => {
       const timestamp = new Date(now.getTime() + (index + 1) * 60_000).toISOString();
       const result = database.prepare(`INSERT INTO listings
         (user_id,brand_id,model_id,year,price,mileage,body_type,transmission,drive_type,engine_type,engine_volume,color,city,description,status,created_at,updated_at)
@@ -78,6 +87,32 @@ export function seed(database: Database.Database, now = new Date('2026-08-18T12:
       if (item.status === 'pending_moderation') database.prepare("INSERT INTO listing_moderation_history (listing_id,action,created_at) VALUES (?,'submitted',?)").run(listingId, timestamp);
       if (item.status === 'published') database.prepare("INSERT INTO listing_moderation_history (listing_id,action,admin_identifier,created_at) VALUES (?,'approved','admin',?)").run(listingId, timestamp);
       if (item.status === 'rejected') database.prepare("INSERT INTO listing_moderation_history (listing_id,action,reason,admin_identifier,created_at) VALUES (?,'rejected','Добавьте более подробное описание состояния кузова.','admin',?)").run(listingId, timestamp);
-    });
-  })();
+      });
+    })();
+  }
+
+  const ownedListings = database.prepare('SELECT id,status FROM listings WHERE user_id=? ORDER BY id').all(ownerId) as Array<{ id: number; status: string }>;
+  const standardId = Number((database.prepare("SELECT id FROM tariffs WHERE code='standard'").get() as { id: number }).id);
+  const seedStates = ['pending', 'paid', 'paid', 'failed'] as const;
+  ownedListings.slice(0, 4).forEach((listing, index) => {
+    const status = seedStates[index];
+    const timestamp = new Date(now.getTime() + (index + 10) * 60_000).toISOString();
+    database.prepare(`INSERT OR IGNORE INTO payments
+      (customer_id,listing_id,tariff_id,provider,provider_payment_id,amount_minor,currency,status,confirmation_url,idempotency_key,provider_payload,created_at,updated_at,paid_at,failed_at,cancelled_at)
+      VALUES (?,?,?,'demo',?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+        ownerId, listing.id, standardId, `demo-seed-${listing.id}`, 59_900, 'RUB', status,
+        `/payments/seed-${listing.id}/demo`, `seed-payment-${listing.id}`, JSON.stringify({ demo: true }), timestamp, timestamp,
+        status === 'paid' ? timestamp : null, status === 'failed' ? timestamp : null, null,
+      );
+  });
+  const rejected = ownedListings.find((listing) => listing.status === 'rejected');
+  if (rejected) {
+    const timestamp = new Date(now.getTime() + 20 * 60_000).toISOString();
+    database.prepare(`INSERT OR IGNORE INTO payments
+      (customer_id,listing_id,tariff_id,provider,provider_payment_id,amount_minor,currency,status,confirmation_url,idempotency_key,provider_payload,created_at,updated_at,cancelled_at)
+      VALUES (?,?,?,'demo',?,59900,'RUB','cancelled',?,?,?, ?,?,?)`).run(
+        ownerId, rejected.id, standardId, `demo-seed-cancelled-${rejected.id}`, `/payments/seed-cancelled-${rejected.id}/demo`,
+        `seed-payment-cancelled-${rejected.id}`, JSON.stringify({ demo: true }), timestamp, timestamp, timestamp,
+      );
+  }
 }

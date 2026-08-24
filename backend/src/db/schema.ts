@@ -4,6 +4,7 @@ import Database from 'better-sqlite3';
 import { applyInitialSchema } from './migrations/001_initial.js';
 import { applyAutomotiveSchema } from './migrations/002_automotive.js';
 import { applySellerWorkflowSchema } from './migrations/003_seller_workflow.js';
+import { applyPaymentsSchema } from './migrations/004_payments.js';
 
 const databasePath =
   process.env.NODE_ENV === 'test'
@@ -30,6 +31,7 @@ const MIGRATIONS: Migration[] = [
   { id: 1, name: '001_initial', up: applyInitialSchema },
   { id: 2, name: '002_automotive', up: applyAutomotiveSchema },
   { id: 3, name: '003_seller_workflow', up: applySellerWorkflowSchema },
+  { id: 4, name: '004_payments', up: applyPaymentsSchema },
 ];
 
 export function migrate(database: Database.Database = db): void {

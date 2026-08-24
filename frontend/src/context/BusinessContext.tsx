@@ -10,6 +10,8 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   timezone: 'Europe/Moscow',
   demoMode: true,
   adminProtected: true,
+  paymentProvider: 'demo',
+  demoPaymentsEnabled: true,
   currency: 'RUB',
   currencySymbol: '₽',
   branding: { accent: '#2563EB', logoUrl: null },

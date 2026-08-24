@@ -5,7 +5,7 @@ import cors from 'cors';
 import express from 'express';
 import { ZodError } from 'zod';
 import { config, publicAppConfig } from './config.js';
-import { fileStorage, providers } from './container.js';
+import { fileStorage, paymentProvider, providers } from './container.js';
 import { seed } from './db/index.js';
 import { db, migrate } from './db/schema.js';
 import { logger } from './logger.js';
@@ -16,8 +16,12 @@ import { createAutomotiveAdminRouter, createAutomotiveDemoAdminRouter } from './
 import type { AutomotiveProviders } from './automotive.js';
 import type { FileStorage } from './providers/fileStorage.js';
 import { createSellerListingsRouter } from './routes/sellerListings.js';
+import type { PaymentProvider, PaymentRepository } from './payments.js';
+import { createPaymentsRouter, type PaymentRuntime } from './routes/payments.js';
 
-export function createApp(data: AutomotiveProviders = providers, storage: FileStorage = fileStorage): express.Express {
+export function createApp(data: AutomotiveProviders = providers, storage: FileStorage = fileStorage,
+  payments: PaymentRepository = data.payments, payProvider: PaymentProvider = paymentProvider,
+  paymentRuntime: PaymentRuntime = { demoEnabled: config.allowDemoMode && config.allowDemoPayments }): express.Express {
   const app = express();
   const allowedOrigins = new Set([
     config.appUrl,
@@ -61,10 +65,11 @@ export function createApp(data: AutomotiveProviders = providers, storage: FileSt
   });
 
   app.use('/api/config', configRouter);
-  app.use('/api', createSellerListingsRouter(data, storage));
+  app.use('/api', createSellerListingsRouter(data, storage, undefined, payments));
+  app.use('/api', createPaymentsRouter(data, payments, payProvider, paymentRuntime));
   app.use('/api', createAutomotivePublicRouter(data));
-  app.use('/api/demo-admin', createAutomotiveDemoAdminRouter(data));
-  app.use('/api/admin', createAutomotiveAdminRouter(data));
+  app.use('/api/demo-admin', createAutomotiveDemoAdminRouter(data, payments));
+  app.use('/api/admin', createAutomotiveAdminRouter(data, payments));
 
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   app.use('/uploads/listings', express.static(config.uploadsDir, { index: false, immutable: true, maxAge: '1y' }));

@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 import type { AutomotiveProviders, Listing, ListingFilters, ListingPhoto, ModerationEvent, VehicleBrand, VehicleModel } from '../../automotive.js';
 import type { Customer, TelegramUser } from '../../types.js';
+import { createPaymentRepository } from './paymentSqlite.js';
 
 type Row = Record<string, unknown>;
 const nowIso = () => new Date().toISOString();
@@ -47,6 +48,7 @@ export function createAutomotiveProviders(database: Database.Database): Automoti
   });
 
   return {
+    payments: createPaymentRepository(database),
     customers: {
       upsert(user: TelegramUser) {
         const found = database.prepare('SELECT * FROM customers WHERE telegram_user_id = ?').get(user.id) as Row | undefined;

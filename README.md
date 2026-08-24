@@ -1,6 +1,6 @@
 # AutoMarket Demo Telegram Mini App
 
-MVP автомобильной доски объявлений для Telegram Mini Apps. Пользователь может просматривать каталог, сохранять избранное и пройти полный seller flow: создать объявление, загрузить фотографии, отправить его на модерацию и опубликовать после решения администратора.
+MVP автомобильной доски объявлений для Telegram Mini Apps. Пользователь может просматривать каталог, сохранять избранное и пройти полный seller flow: создать объявление, загрузить фотографии, выбрать тариф, пройти demo-оплату, отправить объявление на модерацию и опубликовать после решения администратора.
 
 ## Architecture
 
@@ -8,19 +8,19 @@ MVP автомобильной доски объявлений для Telegram M
 React + Vite + Telegram WebApp
   → REST API (Express)
   → application services
-  → automotive + FileStorage interfaces
-  → local SQLite provider (better-sqlite3, WAL) + LocalFileStorage
+  → automotive + FileStorage + PaymentProvider interfaces
+  → local SQLite provider (better-sqlite3, WAL) + LocalFileStorage + configured payment provider
 ```
 
 Composition находится в `backend/src/container.ts`, SQL — только в local provider. Telegram `initData` validation и browser demo mode сохранены.
 
 ## Domain
 
-Активный домен: `Customer`, `VehicleBrand`, `VehicleModel`, `Listing`, `ListingPhoto`, `Favorite`, `ModerationEvent`.
+Активный домен: `Customer`, `VehicleBrand`, `VehicleModel`, `Listing`, `ListingPhoto`, `Favorite`, `ModerationEvent`, `Tariff`, `Payment`, `PaymentEvent`.
 
 Статусы объявлений: `draft`, `pending_moderation`, `published`, `rejected`, `archived`. Публичное API возвращает только `published`.
 
-Lifecycle: `draft → pending_moderation → published` или `draft → pending_moderation → rejected → draft`. Редактирование опубликованного объявления автоматически возвращает его на модерацию. Владелец определяется только из Telegram/demo auth context.
+Lifecycle: `draft → payment pending → payment paid → pending_moderation → published` или `rejected → draft`. Неоплаченное объявление нельзя отправить на модерацию; статус проверяется на backend. Редактирование опубликованного объявления автоматически возвращает его на модерацию. Владелец определяется только из Telegram/demo auth context.
 
 ## Local run
 
@@ -34,6 +34,8 @@ npm run dev
 
 ```dotenv
 ALLOW_DEMO_MODE=true
+PAYMENT_PROVIDER=demo
+ALLOW_DEMO_PAYMENTS=true
 ADMIN_TOKEN=<local value>
 ```
 
@@ -44,6 +46,7 @@ ADMIN_TOKEN=<local value>
 - Admin: http://localhost:5173/admin
 - Read-only demo admin: http://localhost:5173/demo/admin
 - Seller cabinet: http://localhost:5173/my/listings
+- Payment admin: http://localhost:5173/admin/payments
 
 Загруженные изображения сохраняются вне SQLite в `UPLOADS_DIR` (`./data/uploads/listings` по умолчанию). Допускаются JPG, PNG, WebP и GIF до 5 МБ, максимум 10 фотографий на объявление. В Docker следует монтировать `/data`, где находятся база и uploads.
 
@@ -62,10 +65,19 @@ ADMIN_TOKEN=<local value>
 - `POST /api/me/listings/:id/archive`
 - `POST /api/me/listings/:id/photos`
 - `DELETE /api/me/listings/:id/photos/:photoId`
+- `GET /api/tariffs`
+- `POST /api/me/listings/:id/payments`
+- `GET /api/me/payments` and `GET /api/me/payments/:id`
+- `GET /api/me/listings/:id/payment-status`
+- `POST /api/demo-payments/:id/{succeed|fail|cancel}` (только при включённом demo mode)
+- `POST /api/payments/webhook/:provider`
 - `GET /api/admin/listings`
 - `POST /api/admin/listings/:id/approve`
 - `POST /api/admin/listings/:id/reject`
 - `GET /api/demo-admin/listings`
+- `GET /api/admin/payments` and `GET /api/demo-admin/payments`
+
+Тарифы и суммы хранятся в SQLite в integer-копейках и всегда берутся backend-ом. `DemoPaymentProvider` даёт контролируемый checkout без реального списания; `ExternalPaymentProvider` — fail-closed stub с `501 PAYMENT_PROVIDER_NOT_CONFIGURED`. Provider выбирается только в composition layer. Реальный эквайринг пока не подключён.
 
 Каталог поддерживает `brand`, `model`, `priceMin`, `priceMax`, `yearMin`, `yearMax`, `mileageMax`, `bodyType`, `transmission`, `driveType`, `engineType`, `city` и сортировки `newest`, `price_asc`, `price_desc`, `year_desc`, `mileage_asc`.
 
@@ -88,6 +100,6 @@ SQLite хранится в `/data/automarket.db`, изображения — в 
 
 ## Current scope
 
-Нет оплаты, VIN decoding, внешних автомобильных баз, чата, продвижения, дилерских аккаунтов, сложной revision system и production deploy. Контакт продавца остаётся demo-safe placeholder.
+Нет реального эквайринга, refunds, VIN decoding, внешних автомобильных баз, чата, продвижения, дилерских аккаунтов, subscription billing, сложной revision system и production deploy. Контакт продавца остаётся demo-safe placeholder.
 
 Старые real-estate исходники пока оставлены как неактивный legacy-код: они не импортируются из runtime entrypoints и не доступны через UI/API. Это позволяет сохранить историю и вынести физическое удаление в отдельный безопасный cleanup.

@@ -9,6 +9,8 @@ import { ListingDetailsPage } from './pages/ListingDetailsPage';
 import { ListingAdminDetailsPage, ListingsAdminPage } from './pages/ListingsAdminPage';
 import { MyListingDetailsPage, MyListingsPage } from './pages/MyListingsPage';
 import { ListingEditorPage } from './pages/ListingEditorPage';
+import { DemoPaymentPage } from './pages/DemoPaymentPage';
+import { PaymentAdminDetailsPage, PaymentsAdminPage } from './pages/PaymentsAdminPage';
 
 export default function App() {
   const location = useLocation();
@@ -28,12 +30,17 @@ export default function App() {
         <Route path="/my/listings/new" element={<ListingEditorPage />} />
         <Route path="/my/listings/:id/edit" element={<ListingEditorPage />} />
         <Route path="/my/listings/:id" element={<MyListingDetailsPage />} />
+        <Route path="/payments/:id/demo" element={<DemoPaymentPage />} />
         <Route path="/admin" element={<ListingsAdminPage />} />
         <Route path="/admin/listings" element={<ListingsAdminPage />} />
         <Route path="/admin/listings/:id" element={<ListingAdminDetailsPage />} />
+        <Route path="/admin/payments" element={<PaymentsAdminPage />} />
+        <Route path="/admin/payments/:id" element={<PaymentAdminDetailsPage />} />
         <Route path="/demo/admin" element={<ListingsAdminPage />} />
         <Route path="/demo/admin/listings" element={<ListingsAdminPage />} />
         <Route path="/demo/admin/listings/:id" element={<ListingAdminDetailsPage />} />
+        <Route path="/demo/admin/payments" element={<PaymentsAdminPage />} />
+        <Route path="/demo/admin/payments/:id" element={<PaymentAdminDetailsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {!isAdmin && <BottomNav />}
