@@ -41,7 +41,7 @@ export async function createListingPayment(input: {
     input.payments.attachProvider(payment.id, providerResult.providerPaymentId, providerResult.confirmationUrl, providerResult.payload);
     return input.payments.getDetails(payment.id)!;
   } catch (error) {
-    input.payments.transition(payment.id, 'pending', 'failed');
+    input.payments.removePending(payment.id);
     throw error;
   }
 }

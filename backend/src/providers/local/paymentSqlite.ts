@@ -43,6 +43,7 @@ export function createPaymentRepository(database: Database.Database): PaymentRep
         .run(providerPaymentId, confirmationUrl, payload ? JSON.stringify(payload) : null, nowIso(), id);
       return get(id)!;
     },
+    removePending(id) { return database.prepare("DELETE FROM payments WHERE id=? AND status='pending' AND provider_payment_id IS NULL").run(id).changes > 0; },
     get,
     getDetails(id) { const payment = get(id); return payment ? details(payment) : undefined; },
     getByIdempotencyKey(key) { const row = database.prepare('SELECT * FROM payments WHERE idempotency_key=?').get(key) as Row | undefined; return row ? mapPayment(row) : undefined; },

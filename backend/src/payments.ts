@@ -32,6 +32,7 @@ export interface PaymentRepository {
   getTariff(id: number): Tariff | undefined;
   create(input: { customerId: number; listingId: number; tariffId: number; provider: string; amountMinor: number; currency: string; idempotencyKey: string }): Payment;
   attachProvider(id: number, providerPaymentId: string | null, confirmationUrl: string | null, payload?: Record<string, unknown>): Payment;
+  removePending(id: number): boolean;
   get(id: number): Payment | undefined;
   getDetails(id: number): PaymentDetails | undefined;
   getByIdempotencyKey(key: string): Payment | undefined;
