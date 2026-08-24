@@ -73,6 +73,6 @@ describe('automotive admin', () => {
     expect((await request(app).get('/api/demo-admin/listings')).status).toBe(200);
     const write = await request(app).post('/api/demo-admin/listings/1').send({ status: 'published' });
     expect(write.status).toBe(405);
-    expect(write.body.error.code).toBe('DEMO_READ_ONLY');
+    expect(write.body.error.code).toBe('DEMO_ADMIN_READ_ONLY');
   });
 });

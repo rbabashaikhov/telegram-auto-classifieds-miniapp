@@ -27,7 +27,6 @@ function slug(value: string): string {
 
 export function seed(database: Database.Database, now = new Date('2026-08-18T12:00:00')): void {
   const existing = database.prepare('SELECT COUNT(*) AS count FROM listings').get() as { count: number };
-  if (existing.count > 0) return;
   const insertBrand = database.prepare('INSERT OR IGNORE INTO vehicle_brands (name, slug) VALUES (?, ?)');
   const brandByName = database.prepare('SELECT id FROM vehicle_brands WHERE name = ?');
   const insertModel = database.prepare('INSERT OR IGNORE INTO vehicle_models (brand_id, name, slug) VALUES (?, ?, ?)');
@@ -36,7 +35,7 @@ export function seed(database: Database.Database, now = new Date('2026-08-18T12:
     (user_id, brand_id, model_id, year, price, mileage, body_type, transmission, drive_type, engine_type, engine_volume, color, city, description, status, created_at, updated_at)
     VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const insertPhoto = database.prepare('INSERT INTO listing_photos (listing_id, url, position) VALUES (?, ?, ?)');
-  database.transaction(() => {
+  if (existing.count === 0) database.transaction(() => {
     DEMO_LISTINGS.forEach((item, index) => {
       const [brand, model, year, price, mileage, bodyType, transmission, driveType, engineType, engineVolume, color, city, description, status] = item;
       insertBrand.run(brand, slug(brand));
@@ -48,6 +47,37 @@ export function seed(database: Database.Database, now = new Date('2026-08-18T12:
       const listingId = Number(result.lastInsertRowid);
       insertPhoto.run(listingId, `/images/cars/car-${(index % 5) + 1}.svg`, 0);
       insertPhoto.run(listingId, `/images/cars/car-${((index + 1) % 5) + 1}.svg`, 1);
+    });
+  })();
+
+  const demoTelegramId = 999000001;
+  database.prepare(`INSERT OR IGNORE INTO customers (telegram_user_id,name,username,created_at,updated_at)
+    VALUES (?,?,?,?,?)`).run(demoTelegramId, 'Иван Петров', 'demo_client', now.toISOString(), now.toISOString());
+  const ownerId = Number((database.prepare('SELECT id FROM customers WHERE telegram_user_id=?').get(demoTelegramId) as { id: number }).id);
+  const owned = database.prepare('SELECT COUNT(*) AS count FROM listings WHERE user_id=?').get(ownerId) as { count: number };
+  if (owned.count > 0) return;
+
+  const toyotaBrand = database.prepare("SELECT id FROM vehicle_brands WHERE slug='toyota'").get() as { id: number };
+  const camryModel = database.prepare("SELECT id FROM vehicle_models WHERE brand_id=? AND slug='camry'").get(toyotaBrand.id) as { id: number };
+  const workflow = [
+    { status: 'draft', year: 2016, price: 1_650_000, mileage: 126_000, city: 'Москва', description: 'Черновик объявления: автомобиль обслужен, подробности будут добавлены владельцем.' },
+    { status: 'pending_moderation', year: 2020, price: 2_850_000, mileage: 67_000, city: 'Тверь', description: 'Объявление отправлено на проверку, автомобиль в хорошем демонстрационном состоянии.' },
+    { status: 'published', year: 2019, price: 2_430_000, mileage: 88_000, city: 'Москва', description: 'Опубликованное объявление владельца с полной историей регулярного обслуживания.' },
+    { status: 'rejected', year: 2018, price: 2_050_000, mileage: 101_000, city: 'Рязань', description: 'Демонстрационное объявление с причиной отклонения для повторного редактирования.' },
+  ] as const;
+  database.transaction(() => {
+    workflow.forEach((item, index) => {
+      const timestamp = new Date(now.getTime() + (index + 1) * 60_000).toISOString();
+      const result = database.prepare(`INSERT INTO listings
+        (user_id,brand_id,model_id,year,price,mileage,body_type,transmission,drive_type,engine_type,engine_volume,color,city,description,status,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,'sedan','automatic','front','petrol',2.5,'Серый',?,?,?,?,?)`).run(
+          ownerId, toyotaBrand.id, camryModel.id, item.year, item.price, item.mileage, item.city, item.description, item.status, timestamp, timestamp,
+        );
+      const listingId = Number(result.lastInsertRowid);
+      insertPhoto.run(listingId, `/images/cars/car-${index + 1}.svg`, 0);
+      if (item.status === 'pending_moderation') database.prepare("INSERT INTO listing_moderation_history (listing_id,action,created_at) VALUES (?,'submitted',?)").run(listingId, timestamp);
+      if (item.status === 'published') database.prepare("INSERT INTO listing_moderation_history (listing_id,action,admin_identifier,created_at) VALUES (?,'approved','admin',?)").run(listingId, timestamp);
+      if (item.status === 'rejected') database.prepare("INSERT INTO listing_moderation_history (listing_id,action,reason,admin_identifier,created_at) VALUES (?,'rejected','Добавьте более подробное описание состояния кузова.','admin',?)").run(listingId, timestamp);
     });
   })();
 }

@@ -7,6 +7,8 @@ import { CatalogPage } from './pages/CatalogPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { ListingDetailsPage } from './pages/ListingDetailsPage';
 import { ListingAdminDetailsPage, ListingsAdminPage } from './pages/ListingsAdminPage';
+import { MyListingDetailsPage, MyListingsPage } from './pages/MyListingsPage';
+import { ListingEditorPage } from './pages/ListingEditorPage';
 
 export default function App() {
   const location = useLocation();
@@ -17,11 +19,15 @@ export default function App() {
   return (
     <div className={isAdmin ? undefined : 'app-shell'}>
       {showDemoChrome && <DemoChrome showTour={false} showAdmin={business.features.demoAdminPreview} onStartTour={() => undefined} />}
-      {!isAdmin && <header className="site-header"><Link to="/" className="site-brand"><span>AM</span>AutoMarket Demo</Link><Link to="/favorites" className="header-favorite">♡ Избранное</Link></header>}
+      {!isAdmin && <header className="site-header"><Link to="/" className="site-brand"><span>AM</span>AutoMarket Demo</Link><nav className="header-links"><Link to="/favorites">♡ Избранное</Link><Link to="/my/listings">Мои объявления</Link></nav></header>}
       <Routes>
         <Route path="/" element={<CatalogPage />} />
         <Route path="/listings/:id" element={<ListingDetailsPage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
+        <Route path="/my/listings" element={<MyListingsPage />} />
+        <Route path="/my/listings/new" element={<ListingEditorPage />} />
+        <Route path="/my/listings/:id/edit" element={<ListingEditorPage />} />
+        <Route path="/my/listings/:id" element={<MyListingDetailsPage />} />
         <Route path="/admin" element={<ListingsAdminPage />} />
         <Route path="/admin/listings" element={<ListingsAdminPage />} />
         <Route path="/admin/listings/:id" element={<ListingAdminDetailsPage />} />

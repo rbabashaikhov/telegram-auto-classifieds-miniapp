@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 function boolEnv(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined || value === '') return fallback;
   return value === 'true' || value === '1';
@@ -38,6 +40,7 @@ export const config = {
   appUrl: process.env.APP_URL || 'http://localhost:5173',
   databasePath: process.env.DATABASE_PATH || '',
   publicDir: process.env.PUBLIC_DIR || '',
+  uploadsDir: process.env.UPLOADS_DIR || path.join(process.cwd(), 'data', 'uploads', 'listings'),
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
   allowDemoMode: process.env.ALLOW_DEMO_MODE === 'true',
   timezone: process.env.TZ || 'Europe/Moscow',

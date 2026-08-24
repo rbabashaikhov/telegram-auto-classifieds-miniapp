@@ -46,6 +46,7 @@ RUN mkdir -p /data
 
 ENV NODE_ENV=production
 ENV DATABASE_PATH=/data/automarket.db
+ENV UPLOADS_DIR=/data/uploads/listings
 ENV PUBLIC_DIR=/app/backend/public
 ENV PORT=3000
 ENV ALLOW_DEMO_MODE=true

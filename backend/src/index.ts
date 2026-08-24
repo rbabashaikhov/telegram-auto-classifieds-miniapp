@@ -6,7 +6,7 @@ import cors from 'cors';
 import express from 'express';
 import { ZodError } from 'zod';
 import { config, publicAppConfig } from './config.js';
-import { providers } from './container.js';
+import { fileStorage, providers } from './container.js';
 import { seed } from './db/index.js';
 import { db, migrate } from './db/schema.js';
 import { logger } from './logger.js';
@@ -15,8 +15,10 @@ import { configRouter } from './routes/config.js';
 import { createAutomotivePublicRouter } from './routes/automotivePublic.js';
 import { createAutomotiveAdminRouter, createAutomotiveDemoAdminRouter } from './routes/automotiveAdmin.js';
 import type { AutomotiveProviders } from './automotive.js';
+import type { FileStorage } from './providers/fileStorage.js';
+import { createSellerListingsRouter } from './routes/sellerListings.js';
 
-export function createApp(data: AutomotiveProviders = providers): express.Express {
+export function createApp(data: AutomotiveProviders = providers, storage: FileStorage = fileStorage): express.Express {
   const app = express();
   const allowedOrigins = new Set([
     config.appUrl,
@@ -60,11 +62,14 @@ export function createApp(data: AutomotiveProviders = providers): express.Expres
   });
 
   app.use('/api/config', configRouter);
+  app.use('/api', createSellerListingsRouter(data, storage));
   app.use('/api', createAutomotivePublicRouter(data));
   app.use('/api/demo-admin', createAutomotiveDemoAdminRouter(data));
   app.use('/api/admin', createAutomotiveAdminRouter(data));
 
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  app.use('/uploads/listings', express.static(config.uploadsDir, { index: false, immutable: true, maxAge: '1y' }));
+
   const publicDirCandidates = [
     config.publicDir || undefined,
     path.join(__dirname, '../public'),

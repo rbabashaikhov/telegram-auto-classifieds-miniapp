@@ -5,6 +5,7 @@ export function BottomNav() {
     <nav className="bottom-nav">
       <NavLink to="/" end>Каталог</NavLink>
       <NavLink to="/favorites">Избранное</NavLink>
+      <NavLink to="/my/listings">Мои объявления</NavLink>
     </nav>
   );
 }

@@ -11,6 +11,9 @@ import type {
   ListingFilters,
   VehicleBrand,
   VehicleModel,
+  ListingInput,
+  SellerListing,
+  AdminListing,
 } from '../types';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
@@ -51,7 +54,7 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
-  headers.set('Content-Type', 'application/json');
+  if (!(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
   if (initData) headers.set('x-telegram-init-data', initData);
   if (adminToken && path.startsWith('/api/admin')) headers.set('x-admin-token', adminToken);
 
@@ -83,8 +86,18 @@ export const api = {
   getListingFavorites: () => request<Listing[]>('/api/me/favorites'),
   addListingFavorite: (id: number) => request<{ created: boolean }>(`/api/listings/${id}/favorite`, { method: 'POST', body: '{}' }),
   removeListingFavorite: (id: number) => request<{ removed: boolean }>(`/api/listings/${id}/favorite`, { method: 'DELETE' }),
-  getAdminListings: (demo = false) => request<Listing[]>(`/api/${demo ? 'demo-admin' : 'admin'}/listings`),
-  getAdminListing: (id: number, demo = false) => request<Listing>(`/api/${demo ? 'demo-admin' : 'admin'}/listings/${id}`),
+  getMyListings: () => request<Listing[]>('/api/me/listings'),
+  getMyListing: (id: number) => request<SellerListing>(`/api/me/listings/${id}`),
+  createMyListing: (body: ListingInput) => request<Listing>('/api/me/listings', { method: 'POST', body: JSON.stringify(body) }),
+  updateMyListing: (id: number, body: ListingInput) => request<Listing>(`/api/me/listings/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  submitMyListing: (id: number) => request<Listing>(`/api/me/listings/${id}/submit`, { method: 'POST', body: '{}' }),
+  archiveMyListing: (id: number) => request<Listing>(`/api/me/listings/${id}/archive`, { method: 'POST', body: '{}' }),
+  uploadListingPhotos: (id: number, files: File[]) => { const body = new FormData(); files.forEach((file) => body.append('photos', file)); return request<Listing['photos']>(`/api/me/listings/${id}/photos`, { method: 'POST', body }); },
+  removeListingPhoto: (listingId: number, photoId: number) => request<{ removed: boolean }>(`/api/me/listings/${listingId}/photos/${photoId}`, { method: 'DELETE' }),
+  getAdminListings: (demo = false, status = '') => request<Listing[]>(`/api/${demo ? 'demo-admin' : 'admin'}/listings${status ? `?status=${status}` : ''}`),
+  getAdminListing: (id: number, demo = false) => request<AdminListing>(`/api/${demo ? 'demo-admin' : 'admin'}/listings/${id}`),
+  approveAdminListing: (id: number) => request<Listing>(`/api/admin/listings/${id}/approve`, { method: 'POST', body: '{}' }),
+  rejectAdminListing: (id: number, reason: string) => request<Listing>(`/api/admin/listings/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
   getConfig: () => request<AppConfig>('/api/config'),
   getCatalog: () => request<{ projects: unknown[]; properties: PropertyCard[] }>('/api/catalog'),
   getProperty: (id: number) => request<PropertyCard>(`/api/properties/${id}`),

@@ -43,6 +43,15 @@ export interface Listing {
   updatedAt: string;
 }
 
+export interface ModerationEvent { id: number; listingId: number; action: string; reason: string | null; adminIdentifier: string | null; createdAt: string }
+export interface SellerListing extends Listing { moderationHistory: ModerationEvent[] }
+export interface AdminListing extends Listing { owner: { id: number; name: string; username: string | null } | null; moderationHistory: ModerationEvent[] }
+export interface ListingInput {
+  brandId: number; modelId: number; year: number; price: number; mileage: number; bodyType: string;
+  transmission: string; driveType: string; engineType: string; engineVolume: number; color: string;
+  city: string; description: string;
+}
+
 export interface ListingFilters {
   brand?: string; model?: string; priceMin?: string; priceMax?: string; yearMin?: string; yearMax?: string;
   mileageMax?: string; bodyType?: string; transmission?: string; driveType?: string; engineType?: string;
