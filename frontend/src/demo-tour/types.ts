@@ -1,13 +1,13 @@
 export type TourPlacement = 'top' | 'bottom' | 'auto';
 
 export type TourAction =
-  | 'fill-qualification'
-  | 'open-matches'
-  | 'open-property'
-  | 'open-viewing'
-  | 'open-admin-lead'
-  | 'open-analytics'
-  | 'open-crm';
+  | 'open-listing'
+  | 'open-seller-cabinet'
+  | 'open-editor-details'
+  | 'open-editor-preview'
+  | 'open-editor-payment'
+  | 'open-moderation'
+  | 'open-demo-admin';
 
 export interface TourStep {
   id: string;
@@ -18,6 +18,8 @@ export interface TourStep {
   placement?: TourPlacement;
   action?: TourAction;
   waitMs?: number;
+  nextLabel?: string;
+  scrollBlock?: ScrollLogicalPosition;
 }
 
 export interface DemoTourDefinition {

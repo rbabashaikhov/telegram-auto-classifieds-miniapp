@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
-import { DEMO_QUALIFICATION_DRAFT } from '../demo-tour/DemoTourProvider';
+import { LEGACY_DEMO_QUALIFICATION_DRAFT as DEMO_QUALIFICATION_DRAFT } from '../demo-tour/legacyQualificationDemo';
 import { formatPrice, roomsLabel } from '../lib/format';
 import type { PropertyCard } from '../types';
 

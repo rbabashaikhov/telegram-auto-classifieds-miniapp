@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canRunSalesDemoTour, canShowSalesDemoChrome, shouldAutoStartTour } from './eligibility';
+import { canRunSalesDemoTour, canShowSalesDemoChrome } from './eligibility';
 import { createTourStorage, memoryStorage } from './storage';
 import { chooseTooltipPlacement } from './placement';
 import { findTourTarget, tourTargetSelector } from './targets';
@@ -17,15 +17,19 @@ describe('demo tour eligibility', () => {
     expect(canRunSalesDemoTour(base)).toBe(true);
     expect(canRunSalesDemoTour({ ...base, isTelegram: true })).toBe(false);
     expect(canRunSalesDemoTour({ ...base, demoMode: false })).toBe(false);
-  });
-
-  it('auto-starts once', () => {
-    expect(shouldAutoStartTour({ ...base, hasBeenSeen: false })).toBe(true);
-    expect(shouldAutoStartTour({ ...base, hasBeenSeen: true })).toBe(false);
+    expect(canRunSalesDemoTour({ ...base, isDemo: false })).toBe(false);
+    expect(canRunSalesDemoTour({ ...base, demoTourEnabled: false })).toBe(false);
   });
 
   it('hides chrome on admin paths', () => {
     expect(canShowSalesDemoChrome({ ...base, demoAdminPreviewEnabled: true, isAdminPath: true })).toBe(false);
+  });
+
+  it('shows the launch chrome only in an eligible browser demo', () => {
+    const chrome = { ...base, demoAdminPreviewEnabled: true };
+    expect(canShowSalesDemoChrome(chrome)).toBe(true);
+    expect(canShowSalesDemoChrome({ ...chrome, isTelegram: true })).toBe(false);
+    expect(canShowSalesDemoChrome({ ...chrome, demoMode: false })).toBe(false);
   });
 });
 

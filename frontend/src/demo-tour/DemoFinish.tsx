@@ -14,7 +14,7 @@ export function DemoFinish({
   return (
     <div className="demo-sheet-backdrop" role="presentation">
       <div className="demo-sheet" role="dialog" aria-modal="true" aria-labelledby="demo-finish-title">
-        <p className="eyebrow">Traffic → Qualified lead</p>
+        <p className="eyebrow">AutoMarket</p>
         <h2 id="demo-finish-title">{finish.title}</h2>
         <p className="lead">{finish.lead}</p>
         <ul className="demo-sheet-checks">

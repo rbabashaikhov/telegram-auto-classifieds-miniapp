@@ -22,7 +22,7 @@ export function ListingDetailsPage() {
       <div className="gallery">{listing.photos.map((photo, index) => <img key={photo.id} className={index === 0 ? 'gallery-main' : ''} src={photo.url} alt={`${listing.brand.name} ${listing.model.name}, фото ${index + 1}`} />)}</div>
       <section className="details-layout">
         <div><p className="eyebrow">{listing.city}</p><h1>{listing.brand.name} {listing.model.name}, {listing.year}</h1><p className="details-price">{formatPrice(listing.price)}</p></div>
-        <button className={`favorite-detail ${favorite ? 'is-active' : ''}`} type="button" onClick={toggle}>{favorite ? '♥ В избранном' : '♡ В избранное'}</button>
+        <button className={`favorite-detail ${favorite ? 'is-active' : ''}`} data-demo-tour="favorite-action" type="button" onClick={toggle}>{favorite ? '♥ В избранном' : '♡ В избранное'}</button>
       </section>
       <dl className="spec-grid">{specs.map(([name, value]) => <div key={String(name)}><dt>{name}</dt><dd>{value}</dd></div>)}</dl>
       <section className="description"><h2>Описание</h2><p>{listing.description}</p><p className="published-date">Опубликовано {new Date(listing.createdAt).toLocaleDateString('ru-RU')}</p></section>

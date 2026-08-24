@@ -11,29 +11,11 @@ import {
   canRunSalesDemoTour,
   canShowSalesDemoChrome,
   isSalesDemoAdminPath,
-  shouldAutoStartTour,
 } from './eligibility';
+import { resolveTourPath } from './navigation';
 import { browserStorage, createTourStorage } from './storage';
 import { findTourTarget, paddedRect, waitForTourTarget } from './targets';
 import type { DemoTourDefinition, TourStep } from './types';
-
-export const TOUR_DRAFT_KEY = 'nord-estate-tour-draft';
-export const TOUR_PROPERTY_KEY = 'nord-estate-tour-property';
-
-export const DEMO_QUALIFICATION_DRAFT = {
-  goal: 'own_use',
-  propertyType: 'new_build',
-  locations: ['primorsky'],
-  budgetMin: 16_000_000,
-  budgetMax: 23_000_000,
-  rooms: '2',
-  purchaseTiming: 'now',
-  payment: 'cash',
-  mortgageStatus: null as string | null,
-  preferences: ['finished', 'parking', 'near_metro', 'balcony'],
-  areaMin: 60,
-  areaMax: 80,
-};
 
 type TourPhase = 'idle' | 'intro' | 'tour' | 'finish';
 
@@ -104,40 +86,7 @@ export function DemoTourProvider({
 
   const applyAction = useCallback(
     async (step: TourStep) => {
-      if (step.action === 'fill-qualification') {
-        sessionStorage.setItem(TOUR_DRAFT_KEY, JSON.stringify(DEMO_QUALIFICATION_DRAFT));
-        navigate('/qualify?tour=1');
-        return;
-      }
-      if (step.action === 'open-matches') {
-        sessionStorage.setItem(TOUR_DRAFT_KEY, JSON.stringify(DEMO_QUALIFICATION_DRAFT));
-        navigate('/matches?preview=1');
-        return;
-      }
-      if (step.action === 'open-property') {
-        const matches = await api.previewMatches(DEMO_QUALIFICATION_DRAFT);
-        const propertyId = matches[0]?.property.id;
-        if (propertyId) {
-          sessionStorage.setItem(TOUR_PROPERTY_KEY, String(propertyId));
-          navigate(`/properties/${propertyId}?preview=1`);
-        }
-        return;
-      }
-      if (step.action === 'open-viewing') {
-        const propertyId = sessionStorage.getItem(TOUR_PROPERTY_KEY);
-        if (propertyId) navigate(`/properties/${propertyId}/viewing?tour=1`);
-        return;
-      }
-      if (step.action === 'open-admin-lead') {
-        const leads = await api.getDemoLeads();
-        const hot = leads.find((lead) => lead.temperature === 'HOT') ?? leads[0];
-        if (hot) navigate(`/demo/admin/leads/${hot.id}`);
-        else navigate('/demo/admin');
-        return;
-      }
-      if (step.action === 'open-analytics') {
-        navigate('/demo/admin/analytics');
-      }
+      if (step.action) navigate(await resolveTourPath(step.action, api));
     },
     [navigate],
   );
@@ -162,7 +111,7 @@ export function DemoTourProvider({
         const node = await waitForTourTarget(step.target, { timeoutMs: step.waitMs ?? 3200 });
         if (runId !== runIdRef.current) return;
         if (node instanceof HTMLElement) {
-          node.scrollIntoView({ block: 'center', behavior: 'smooth', inline: 'nearest' });
+          node.scrollIntoView({ block: step.scrollBlock ?? 'center', behavior: 'smooth', inline: 'nearest' });
           const measure = () => {
             if (runId !== runIdRef.current) return;
             const live = findTourTarget(step.target);
@@ -190,25 +139,8 @@ export function DemoTourProvider({
   }, [eligibility]);
 
   const beginSteps = useCallback(() => {
-    storage.markSeen('completed');
     void goToStep(0);
-  }, [goToStep, storage]);
-
-  useEffect(() => {
-    if (phase !== 'idle') return;
-    if (
-      shouldAutoStartTour({
-        isDemo,
-        isTelegram,
-        demoMode: business.demoMode,
-        demoTourEnabled,
-        isAdminPath,
-        hasBeenSeen: storage.hasBeenSeen(),
-      })
-    ) {
-      setPhase('intro');
-    }
-  }, [phase, isDemo, isTelegram, business.demoMode, demoTourEnabled, isAdminPath, storage]);
+  }, [goToStep]);
 
   useEffect(() => {
     if (phase !== 'tour') return;
@@ -239,7 +171,7 @@ export function DemoTourProvider({
     <DemoTourContext.Provider value={value}>
       {children}
       {phase === 'intro' && canRunSalesDemoTour(eligibility) && (
-        <DemoIntro intro={definition.intro} onStart={beginSteps} onSkip={skip} />
+        <DemoIntro intro={definition.intro} onStart={beginSteps} onSkip={skip} onClose={closeTour} />
       )}
       {phase === 'tour' && step && (
         <DemoTourOverlay
@@ -259,6 +191,7 @@ export function DemoTourProvider({
             void goToStep(stepIndex - 1);
           }}
           onSkip={skip}
+          onClose={closeTour}
         />
       )}
       {phase === 'finish' && (

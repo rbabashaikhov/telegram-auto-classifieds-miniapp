@@ -12,7 +12,7 @@ export function DemoChrome({ showTour, showAdmin, onStartTour }: DemoChromeProps
       <span className="demo-badge">Демо</span>
       {showTour && (
         <button type="button" className="demo-chrome-link" onClick={onStartTour}>
-          Как это работает?
+          Показать возможности
         </button>
       )}
       {showAdmin && (

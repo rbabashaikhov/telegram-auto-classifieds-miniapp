@@ -1,8 +1,8 @@
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { BottomNav } from './components/Chrome';
-import { useApp } from './context/AppContext';
 import { useBusiness } from './context/BusinessContext';
 import { DemoChrome } from './demo-tour/DemoChrome';
+import { useDemoTour } from './demo-tour/context';
 import { CatalogPage } from './pages/CatalogPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { ListingDetailsPage } from './pages/ListingDetailsPage';
@@ -14,13 +14,12 @@ import { PaymentAdminDetailsPage, PaymentsAdminPage } from './pages/PaymentsAdmi
 
 export default function App() {
   const location = useLocation();
-  const { isDemo, isTelegram } = useApp();
   const business = useBusiness();
+  const tour = useDemoTour();
   const isAdmin = location.pathname.startsWith('/admin') || location.pathname.startsWith('/demo/admin');
-  const showDemoChrome = isDemo && !isTelegram && business.demoMode && !isAdmin;
   return (
     <div className={isAdmin ? undefined : 'app-shell'}>
-      {showDemoChrome && <DemoChrome showTour={false} showAdmin={business.features.demoAdminPreview} onStartTour={() => undefined} />}
+      {tour.showChrome && <DemoChrome showTour={tour.demoTourEnabled} showAdmin={tour.demoAdminPreviewEnabled} onStartTour={tour.start} />}
       {!isAdmin && <header className="site-header"><Link to="/" className="site-brand"><span>AM</span>{business.appTitle}</Link><nav className="header-links"><Link to="/favorites">♡ Избранное</Link><Link to="/my/listings">Мои объявления</Link></nav></header>}
       <Routes>
         <Route path="/" element={<CatalogPage />} />

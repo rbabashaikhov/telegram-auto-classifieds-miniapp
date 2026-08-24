@@ -3,7 +3,7 @@ import { formatPrice } from '../lib/format';
 import { vehicleLabel } from '../lib/automotiveLabels';
 import type { Listing } from '../types';
 
-export function ListingCard({ listing, favorite, onFavorite }: { listing: Listing; favorite: boolean; onFavorite: (id: number) => void }) {
+export function ListingCard({ listing, favorite, onFavorite, tourTarget }: { listing: Listing; favorite: boolean; onFavorite: (id: number) => void; tourTarget?: boolean }) {
   return (
     <article className="listing-card">
       <Link to={`/listings/${listing.id}`} className="listing-image-wrap">
@@ -12,7 +12,7 @@ export function ListingCard({ listing, favorite, onFavorite }: { listing: Listin
       <button className={`favorite-button ${favorite ? 'is-active' : ''}`} type="button" aria-label={favorite ? 'Убрать из избранного' : 'Добавить в избранное'} onClick={() => onFavorite(listing.id)}>
         {favorite ? '♥' : '♡'}
       </button>
-      <Link to={`/listings/${listing.id}`} className="listing-content">
+      <Link to={`/listings/${listing.id}`} className="listing-content" data-demo-tour={tourTarget ? 'catalog-card' : undefined}>
         <h3>{listing.brand.name} {listing.model.name}</h3>
         <strong className="listing-price">{formatPrice(listing.price)}</strong>
         <div className="chips">

@@ -20,10 +20,6 @@ export function canRunSalesDemoTour(input: SalesDemoEligibility): boolean {
   );
 }
 
-export function shouldAutoStartTour(input: SalesDemoEligibility & { hasBeenSeen: boolean }): boolean {
-  return canRunSalesDemoTour(input) && !input.hasBeenSeen;
-}
-
 export function canShowSalesDemoChrome(input: {
   isDemo: boolean;
   isTelegram: boolean;

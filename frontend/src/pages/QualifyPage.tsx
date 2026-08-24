@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
-import { TOUR_DRAFT_KEY, DEMO_QUALIFICATION_DRAFT } from '../demo-tour/DemoTourProvider';
+import { LEGACY_DEMO_QUALIFICATION_DRAFT as DEMO_QUALIFICATION_DRAFT, LEGACY_TOUR_DRAFT_KEY as TOUR_DRAFT_KEY } from '../demo-tour/legacyQualificationDemo';
 import type { QualificationDraft } from '../types';
 
 const STEPS = [

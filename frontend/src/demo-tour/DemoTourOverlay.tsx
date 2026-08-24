@@ -16,6 +16,7 @@ interface DemoTourOverlayProps {
   onNext: () => void;
   onBack: () => void;
   onSkip: () => void;
+  onClose: () => void;
 }
 
 export function DemoTourOverlay({
@@ -26,6 +27,7 @@ export function DemoTourOverlay({
   onNext,
   onBack,
   onSkip,
+  onClose,
 }: DemoTourOverlayProps) {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipHeight, setTooltipHeight] = useState(180);
@@ -35,6 +37,37 @@ export function DemoTourOverlay({
     if (!node) return;
     setTooltipHeight(node.getBoundingClientRect().height);
   }, [step.id, targetRect?.top, targetRect?.height]);
+
+  useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !tooltipRef.current) return;
+      const focusable = Array.from(tooltipRef.current.querySelectorAll<HTMLElement>('button:not(:disabled), a[href]'));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      previous?.focus();
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    window.setTimeout(() => tooltipRef.current?.querySelector<HTMLElement>('[data-tour-primary]')?.focus(), 0);
+  }, [step.id]);
 
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 390;
@@ -82,6 +115,7 @@ export function DemoTourOverlay({
         className="demo-tour-tooltip"
         style={{ top: tooltipTop, left: tooltipLeft, width: tooltipWidth }}
       >
+        <button type="button" className="demo-tour-close" aria-label="Закрыть тур" onClick={onClose}>×</button>
         <p className="demo-tour-progress">
           {stepIndex + 1} из {stepCount}
         </p>
@@ -97,8 +131,8 @@ export function DemoTourOverlay({
                 Назад
               </button>
             )}
-            <button type="button" className="btn btn-primary" onClick={onNext}>
-              {stepIndex === stepCount - 1 ? 'Готово' : 'Далее'}
+            <button type="button" className="btn btn-primary" data-tour-primary onClick={onNext}>
+              {step.nextLabel ?? (stepIndex === stepCount - 1 ? 'Готово' : 'Далее')}
             </button>
           </div>
         </div>
