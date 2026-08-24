@@ -1,4 +1,13 @@
 import path from 'node:path';
+import { config as loadDotenv } from 'dotenv';
+
+export function environmentPaths(cwd = process.cwd()): string[] {
+  const local = path.resolve(cwd, '.env');
+  const workspaceRoot = path.resolve(cwd, '..', '.env');
+  return path.basename(cwd) === 'backend' ? [local, workspaceRoot] : [local];
+}
+
+loadDotenv({ path: environmentPaths(), quiet: true });
 
 function boolEnv(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined || value === '') return fallback;

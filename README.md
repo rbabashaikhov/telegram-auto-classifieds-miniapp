@@ -30,6 +30,15 @@ npm install
 npm run dev
 ```
 
+Для browser demo и локального admin задайте в корневом `.env`:
+
+```dotenv
+ALLOW_DEMO_MODE=true
+ADMIN_TOKEN=<local value>
+```
+
+После изменения `.env` перезапустите dev server. На странице `/admin` введите то же значение `ADMIN_TOKEN`.
+
 - Frontend: http://localhost:5173
 - API health: http://localhost:3000/api/health
 - Admin: http://localhost:5173/admin

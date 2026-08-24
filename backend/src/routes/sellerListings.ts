@@ -1,4 +1,4 @@
-import { Router, type NextFunction, type Request, type Response } from 'express';
+import { Router, type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
 import type { AutomotiveProviders } from '../automotive.js';
@@ -36,9 +36,9 @@ function customerId(req: Request, data: AutomotiveProviders): number {
   return data.customers.upsert(requireAuth(req).telegramUser).customer.id;
 }
 
-export function createSellerListingsRouter(data: AutomotiveProviders, storage: FileStorage): Router {
+export function createSellerListingsRouter(data: AutomotiveProviders, storage: FileStorage, authenticate: RequestHandler = authMiddleware): Router {
   const router = Router();
-  router.use('/me/listings', authMiddleware);
+  router.use('/me/listings', authenticate);
   router.get('/me/listings', (req, res) => ok(res, data.sellerListings.listByOwner(customerId(req, data))));
   router.get('/me/listings/:id', (req, res) => ok(res, sellerListingDetails(data, customerId(req, data), parseId(req.params.id))));
   router.post('/me/listings', (req, res) => ok(res, createSellerListing(data, customerId(req, data), listingInputSchema.parse(req.body)), 201));

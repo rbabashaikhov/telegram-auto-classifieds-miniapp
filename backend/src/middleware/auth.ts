@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import type { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { config } from '../config.js';
 import type { AuthContext, TelegramUser } from '../types.js';
 import { AppError } from '../errors.js';
@@ -113,22 +113,26 @@ export function resolveAuth(
   throw new Error('Telegram authentication required');
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const initData =
-    (req.header('x-telegram-init-data') as string | undefined) ||
-    (typeof req.query.initData === 'string' ? req.query.initData : undefined);
+export function createAuthMiddleware(settings: { allowDemoMode: boolean; telegramBotToken: string }): RequestHandler {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const initData =
+      (req.header('x-telegram-init-data') as string | undefined) ||
+      (typeof req.query.initData === 'string' ? req.query.initData : undefined);
 
-  try {
-    req.auth = resolveAuth(initData, config.allowDemoMode, config.telegramBotToken || undefined);
-    next();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unauthorized';
-    res.status(401).json({
-      ok: false,
-      error: { code: 'UNAUTHORIZED', message },
-    });
-  }
+    try {
+      req.auth = resolveAuth(initData, settings.allowDemoMode, settings.telegramBotToken || undefined);
+      next();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unauthorized';
+      res.status(401).json({
+        ok: false,
+        error: { code: 'UNAUTHORIZED', message },
+      });
+    }
+  };
 }
+
+export const authMiddleware = createAuthMiddleware(config);
 
 export function optionalAuthMiddleware(req: Request, _res: Response, next: NextFunction): void {
   const initData =

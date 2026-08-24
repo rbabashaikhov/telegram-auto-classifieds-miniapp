@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { isDemoAdminPreviewEnabled } from './config.js';
+import { environmentPaths, isDemoAdminPreviewEnabled } from './config.js';
+import path from 'node:path';
 
 describe('config helpers', () => {
+  it('loads the repository .env when backend runs as an npm workspace', () => {
+    expect(environmentPaths('/workspace/project/backend')).toEqual([
+      path.resolve('/workspace/project/backend/.env'),
+      path.resolve('/workspace/project/.env'),
+    ]);
+  });
   it('enables demo admin only when demo mode and feature flag are on', () => {
     expect(
       isDemoAdminPreviewEnabled({

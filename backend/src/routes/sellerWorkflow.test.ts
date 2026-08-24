@@ -1,9 +1,13 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
+import express from 'express';
+import { createHmac } from 'node:crypto';
 import { AppError } from '../errors.js';
 import type { FileStorage, FileUpload, StoredFile } from '../providers/fileStorage.js';
 import { createApp } from '../index.js';
 import { createTestWorld } from '../test/harness.js';
+import { createAuthMiddleware } from '../middleware/auth.js';
+import { createSellerListingsRouter } from './sellerListings.js';
 
 class MemoryFileStorage implements FileStorage {
   files = new Map<string, Buffer>();
@@ -21,6 +25,25 @@ const admin = () => ({ 'x-admin-token': 'test-admin-token' });
 const png = Buffer.from([137,80,78,71,13,10,26,10,0,0,0,0]);
 const otherUser = () => ({ 'x-telegram-init-data': new URLSearchParams({ user: JSON.stringify({ id: 555002, first_name: 'Другой' }) }).toString() });
 
+function signedInitData(botToken: string, user: object): string {
+  const params = new URLSearchParams({ auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify(user) });
+  const pairs: string[] = [];
+  params.forEach((value, key) => pairs.push(`${key}=${value}`));
+  pairs.sort();
+  const secret = createHmac('sha256', 'WebAppData').update(botToken).digest();
+  params.set('hash', createHmac('sha256', secret).update(pairs.join('\n')).digest('hex'));
+  return params.toString();
+}
+
+function sellerApp(allowDemoMode: boolean, telegramBotToken = '') {
+  const world = createTestWorld();
+  const storage = new MemoryFileStorage();
+  const app = express();
+  app.use(express.json());
+  app.use('/api', createSellerListingsRouter(world.providers, storage, createAuthMiddleware({ allowDemoMode, telegramBotToken })));
+  return { ...world, storage, app };
+}
+
 function input(providers: ReturnType<typeof createTestWorld>['providers']) {
   const brand = providers.catalog.brands()[0]!;
   const model = providers.catalog.models(brand.slug)[0]!;
@@ -34,11 +57,37 @@ async function createDraft() {
 }
 
 describe('seller listing workflow', () => {
-  it('creates an owned draft and lists it in the seller cabinet', async () => {
+  it('lets the browser demo customer create a draft and list own listings', async () => {
     const { app, id } = await createDraft();
     const response = await request(app).get('/api/me/listings');
     expect(response.status).toBe(200);
     expect(response.body.data.some((item: { id: number; status: string }) => item.id === id && item.status === 'draft')).toBe(true);
+  });
+
+  it('lets the browser demo customer submit an owned listing', async () => {
+    const { app, id, providers } = await createDraft();
+    providers.sellerListings.addPhoto(id, { url: '/images/cars/car-1.svg', storageKey: 'seed', mimeType: 'image/png', sizeBytes: 10 });
+    const response = await request(app).post(`/api/me/listings/${id}/submit`);
+    expect(response.status).toBe(200);
+    expect(response.body.data.status).toBe('pending_moderation');
+  });
+
+  it('rejects a browser request when demo mode is disabled', async () => {
+    const { app, providers } = sellerApp(false);
+    const response = await request(app).post('/api/me/listings').send(input(providers));
+    expect(response.status).toBe(401);
+    expect(response.body.error.code).toBe('UNAUTHORIZED');
+  });
+
+  it('accepts valid signed Telegram auth when demo mode is disabled', async () => {
+    const token = '123456:PRODUCTION_TEST_TOKEN';
+    const { app, providers } = sellerApp(false, token);
+    const initData = signedInitData(token, { id: 88001, first_name: 'Telegram', username: 'telegram_user' });
+    const created = await request(app).post('/api/me/listings').set('x-telegram-init-data', initData).send(input(providers));
+    expect(created.status).toBe(201);
+    const listings = await request(app).get('/api/me/listings').set('x-telegram-init-data', initData);
+    expect(listings.status).toBe(200);
+    expect(listings.body.data).toHaveLength(1);
   });
 
   it('does not expose another customer listing through /api/me', async () => {
