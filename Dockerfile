@@ -1,5 +1,5 @@
 # Single-service image: Express serves /api/* and the React static build.
-# SQLite lives at DATABASE_PATH (default /data/realestate.db).
+# SQLite lives at DATABASE_PATH (default /data/automarket.db).
 
 FROM node:20-bookworm-slim AS deps
 
@@ -45,15 +45,12 @@ COPY --from=build /app/frontend/dist ./backend/public
 RUN mkdir -p /data
 
 ENV NODE_ENV=production
-ENV DATABASE_PATH=/data/realestate.db
+ENV DATABASE_PATH=/data/automarket.db
 ENV PUBLIC_DIR=/app/backend/public
 ENV PORT=3000
 ENV ALLOW_DEMO_MODE=true
 ENV TZ=Europe/Moscow
 ENV DATA_MODE=local
-ENV CRM_ADAPTER=local
-ENV PROPERTY_ADAPTER=local
-ENV EVENT_ADAPTER=local
 
 EXPOSE 3000
 

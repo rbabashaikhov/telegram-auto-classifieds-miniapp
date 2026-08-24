@@ -11,13 +11,12 @@ import { seed } from './db/index.js';
 import { db, migrate } from './db/schema.js';
 import { logger } from './logger.js';
 import { AppError, errorBody, statusFromError } from './errors.js';
-import { adminRouter, createAdminRouter } from './routes/admin.js';
 import { configRouter } from './routes/config.js';
-import { demoAdminRouter, createDemoAdminRouter } from './routes/demoAdmin.js';
-import { publicRouter, createPublicRouter } from './routes/public.js';
-import type { Providers } from './providers/types.js';
+import { createAutomotivePublicRouter } from './routes/automotivePublic.js';
+import { createAutomotiveAdminRouter, createAutomotiveDemoAdminRouter } from './routes/automotiveAdmin.js';
+import type { AutomotiveProviders } from './automotive.js';
 
-export function createApp(data: Providers = providers): express.Express {
+export function createApp(data: AutomotiveProviders = providers): express.Express {
   const app = express();
   const allowedOrigins = new Set([
     config.appUrl,
@@ -46,12 +45,8 @@ export function createApp(data: Providers = providers): express.Express {
       db.prepare('SELECT 1 AS ok').get();
       res.json({
         ok: true,
-        dataMode: config.dataMode,
-        crmAdapter: config.crmAdapter,
-        propertyAdapter: config.propertyAdapter,
         demoMode: config.allowDemoMode,
         adminProtected: Boolean(config.admin.token),
-        eventAdapter: config.eventAdapter,
       });
     } catch (error) {
       logger.error('Healthcheck database failure', {
@@ -65,9 +60,9 @@ export function createApp(data: Providers = providers): express.Express {
   });
 
   app.use('/api/config', configRouter);
-  app.use('/api', data === providers ? publicRouter : createPublicRouter(data));
-  app.use('/api/demo-admin', data === providers ? demoAdminRouter : createDemoAdminRouter(data));
-  app.use('/api/admin', data === providers ? adminRouter : createAdminRouter(data));
+  app.use('/api', createAutomotivePublicRouter(data));
+  app.use('/api/demo-admin', createAutomotiveDemoAdminRouter(data));
+  app.use('/api/admin', createAutomotiveAdminRouter(data));
 
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const publicDirCandidates = [
@@ -127,10 +122,7 @@ if (!config.isTest) {
     logger.info('App started', {
       port: config.port,
       database: process.env.DATABASE_PATH || 'local default',
-      dataMode: config.dataMode,
-      crmAdapter: config.crmAdapter,
-      propertyAdapter: config.propertyAdapter,
-      eventAdapter: config.eventAdapter,
+      vertical: 'automotive_classifieds',
       demoMode: config.allowDemoMode,
       adminProtected: Boolean(config.admin.token),
       business: publicAppConfig(),

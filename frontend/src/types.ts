@@ -18,6 +18,37 @@ export interface AppConfig {
   features: { demoTour: boolean; demoAdminPreview: boolean };
 }
 
+export interface VehicleBrand { id: number; name: string; slug: string }
+export interface VehicleModel { id: number; brandId: number; name: string; slug: string }
+export type ListingStatus = 'draft' | 'pending_moderation' | 'published' | 'rejected' | 'archived';
+export interface Listing {
+  id: number;
+  userId: number | null;
+  brand: VehicleBrand;
+  model: VehicleModel;
+  year: number;
+  price: number;
+  mileage: number;
+  bodyType: string;
+  transmission: string;
+  driveType: string;
+  engineType: string;
+  engineVolume: number;
+  color: string;
+  city: string;
+  description: string;
+  status: ListingStatus;
+  photos: Array<{ id: number; listingId: number; url: string; position: number }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListingFilters {
+  brand?: string; model?: string; priceMin?: string; priceMax?: string; yearMin?: string; yearMax?: string;
+  mileageMax?: string; bodyType?: string; transmission?: string; driveType?: string; engineType?: string;
+  city?: string; sort?: 'newest' | 'price_asc' | 'price_desc' | 'year_desc' | 'mileage_asc';
+}
+
 export interface MatchReason {
   code: string;
   label: string;

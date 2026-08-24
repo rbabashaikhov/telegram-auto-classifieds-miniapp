@@ -6,8 +6,6 @@ import App from './App';
 import { api, setTelegramInitData } from './api/client';
 import { AppContext, type AppContextValue } from './context/AppContext';
 import { BusinessContext, DEFAULT_APP_CONFIG } from './context/BusinessContext';
-import { realEstateDemoTour } from './demo-tour/autoTour';
-import { DemoTourProvider } from './demo-tour/DemoTourProvider';
 import type { AppConfig } from './types';
 import './styles.css';
 
@@ -91,9 +89,7 @@ function Root() {
     <BusinessContext.Provider value={business}>
       <AppContext.Provider value={value}>
         <BrowserRouter>
-          <DemoTourProvider definition={realEstateDemoTour}>
-            <App />
-          </DemoTourProvider>
+          <App />
         </BrowserRouter>
       </AppContext.Provider>
     </BusinessContext.Provider>

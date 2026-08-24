@@ -49,16 +49,16 @@ export const config = {
   crmBaseUrl: (process.env.CRM_BASE_URL || '').trim(),
   propertyProviderUrl: (process.env.PROPERTY_PROVIDER_URL || '').trim(),
   business: {
-    name: process.env.BUSINESS_NAME || 'Норд Эстейт',
-    vertical: process.env.BUSINESS_VERTICAL || 'real_estate',
-    type: process.env.BUSINESS_TYPE || 'agency',
-    title: process.env.APP_TITLE || 'Норд Эстейт',
+    name: process.env.BUSINESS_NAME || 'AutoMarket Demo',
+    vertical: process.env.BUSINESS_VERTICAL || 'automotive_classifieds',
+    type: process.env.BUSINESS_TYPE || 'marketplace',
+    title: process.env.APP_TITLE || 'AutoMarket Demo',
     description:
       process.env.APP_DESCRIPTION ||
-      'Квартиры под ваш сценарий жизни — не каталог, а квалифицированный подбор.',
+      'Автомобильная доска объявлений в Telegram.',
     currency: process.env.CURRENCY || 'RUB',
     currencySymbol: process.env.CURRENCY_SYMBOL || '₽',
-    brandAccent: process.env.BRAND_ACCENT || '#C4A574',
+    brandAccent: process.env.BRAND_ACCENT || '#2563EB',
     logoUrl: process.env.BRAND_LOGO_URL || '',
   },
   mortgage: {
@@ -95,7 +95,6 @@ export function publicAppConfig() {
       accent: config.business.brandAccent,
       logoUrl: config.business.logoUrl || null,
     },
-    mortgage: config.mortgage,
     features: {
       demoTour: config.features.demoTour,
       demoAdminPreview: config.features.demoAdminPreview,

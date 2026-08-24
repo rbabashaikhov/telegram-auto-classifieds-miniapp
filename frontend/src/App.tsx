@@ -1,63 +1,33 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { BottomNav } from './components/Chrome';
+import { useApp } from './context/AppContext';
+import { useBusiness } from './context/BusinessContext';
 import { DemoChrome } from './demo-tour/DemoChrome';
-import { isSalesDemoAdminPath } from './demo-tour/eligibility';
-import { useDemoTour } from './demo-tour/context';
-import { HomePage } from './pages/HomePage';
-import { QualifyPage } from './pages/QualifyPage';
-import { MatchesPage } from './pages/MatchesPage';
-import { PropertyPage } from './pages/PropertyPage';
-import { ViewingPage } from './pages/ViewingPage';
-import { MePage, PrivacyPage } from './pages/MePage';
-import { SellPage } from './pages/SellPage';
-import {
-  AdminAnalyticsPage,
-  AdminLeadPage,
-  AdminLeadsPage,
-  AdminPage,
-  AdminPropertiesPage,
-  AdminSellersPage,
-  AdminViewingsPage,
-} from './pages/AdminPage';
+import { CatalogPage } from './pages/CatalogPage';
+import { FavoritesPage } from './pages/FavoritesPage';
+import { ListingDetailsPage } from './pages/ListingDetailsPage';
+import { ListingAdminDetailsPage, ListingsAdminPage } from './pages/ListingsAdminPage';
 
 export default function App() {
   const location = useLocation();
-  const isAdmin = isSalesDemoAdminPath(location.pathname);
-  const tour = useDemoTour();
-
+  const { isDemo, isTelegram } = useApp();
+  const business = useBusiness();
+  const isAdmin = location.pathname.startsWith('/admin') || location.pathname.startsWith('/demo/admin');
+  const showDemoChrome = isDemo && !isTelegram && business.demoMode && !isAdmin;
   return (
     <div className={isAdmin ? undefined : 'app-shell'}>
-      {tour.showChrome && (
-        <DemoChrome
-          showTour={tour.demoTourEnabled}
-          showAdmin={tour.demoAdminPreviewEnabled}
-          onStartTour={tour.start}
-        />
-      )}
+      {showDemoChrome && <DemoChrome showTour={false} showAdmin={business.features.demoAdminPreview} onStartTour={() => undefined} />}
+      {!isAdmin && <header className="site-header"><Link to="/" className="site-brand"><span>AM</span>AutoMarket Demo</Link><Link to="/favorites" className="header-favorite">♡ Избранное</Link></header>}
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/qualify" element={<QualifyPage />} />
-        <Route path="/matches" element={<MatchesPage />} />
-        <Route path="/properties/:id" element={<PropertyPage />} />
-        <Route path="/properties/:id/viewing" element={<ViewingPage />} />
-        <Route path="/me" element={<MePage />} />
-        <Route path="/favorites" element={<MePage />} />
-        <Route path="/sell" element={<SellPage />} />
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/demo/admin" element={<AdminPage readOnly />} />
-        <Route path="/demo/admin/leads" element={<AdminLeadsPage readOnly />} />
-        <Route path="/demo/admin/leads/:id" element={<AdminLeadPage readOnly />} />
-        <Route path="/demo/admin/properties" element={<AdminPropertiesPage readOnly />} />
-        <Route path="/demo/admin/viewings" element={<AdminViewingsPage readOnly />} />
-        <Route path="/demo/admin/sellers" element={<AdminSellersPage readOnly />} />
-        <Route path="/demo/admin/analytics" element={<AdminAnalyticsPage readOnly />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/admin/leads" element={<AdminLeadsPage />} />
-        <Route path="/admin/leads/:id" element={<AdminLeadPage />} />
-        <Route path="/admin/properties" element={<AdminPropertiesPage />} />
-        <Route path="/admin/viewings" element={<AdminViewingsPage />} />
-        <Route path="/admin/sellers" element={<AdminSellersPage />} />
-        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+        <Route path="/" element={<CatalogPage />} />
+        <Route path="/listings/:id" element={<ListingDetailsPage />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
+        <Route path="/admin" element={<ListingsAdminPage />} />
+        <Route path="/admin/listings" element={<ListingsAdminPage />} />
+        <Route path="/admin/listings/:id" element={<ListingAdminDetailsPage />} />
+        <Route path="/demo/admin" element={<ListingsAdminPage />} />
+        <Route path="/demo/admin/listings" element={<ListingsAdminPage />} />
+        <Route path="/demo/admin/listings/:id" element={<ListingAdminDetailsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {!isAdmin && <BottomNav />}

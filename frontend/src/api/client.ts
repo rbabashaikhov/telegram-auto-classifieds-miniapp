@@ -7,6 +7,10 @@ import type {
   MortgageResult,
   PropertyCard,
   QualificationDraft,
+  Listing,
+  ListingFilters,
+  VehicleBrand,
+  VehicleModel,
 } from '../types';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
@@ -68,6 +72,19 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  getListings: (filters: ListingFilters = {}) => {
+    const query = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => { if (value !== undefined && value !== '') query.set(key, value); });
+    return request<Listing[]>(`/api/listings${query.size ? `?${query}` : ''}`);
+  },
+  getListing: (id: number) => request<Listing>(`/api/listings/${id}`),
+  getVehicleBrands: () => request<VehicleBrand[]>('/api/vehicle-brands'),
+  getVehicleModels: (brand = '') => request<VehicleModel[]>(`/api/vehicle-models${brand ? `?brand=${encodeURIComponent(brand)}` : ''}`),
+  getListingFavorites: () => request<Listing[]>('/api/me/favorites'),
+  addListingFavorite: (id: number) => request<{ created: boolean }>(`/api/listings/${id}/favorite`, { method: 'POST', body: '{}' }),
+  removeListingFavorite: (id: number) => request<{ removed: boolean }>(`/api/listings/${id}/favorite`, { method: 'DELETE' }),
+  getAdminListings: (demo = false) => request<Listing[]>(`/api/${demo ? 'demo-admin' : 'admin'}/listings`),
+  getAdminListing: (id: number, demo = false) => request<Listing>(`/api/${demo ? 'demo-admin' : 'admin'}/listings/${id}`),
   getConfig: () => request<AppConfig>('/api/config'),
   getCatalog: () => request<{ projects: unknown[]; properties: PropertyCard[] }>('/api/catalog'),
   getProperty: (id: number) => request<PropertyCard>(`/api/properties/${id}`),

@@ -2,11 +2,12 @@ import path from 'node:path';
 import fs from 'node:fs';
 import Database from 'better-sqlite3';
 import { applyInitialSchema } from './migrations/001_initial.js';
+import { applyAutomotiveSchema } from './migrations/002_automotive.js';
 
 const databasePath =
   process.env.NODE_ENV === 'test'
     ? ':memory:'
-    : process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'realestate.db');
+    : process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'automarket.db');
 
 const dir = path.dirname(databasePath);
 if (databasePath !== ':memory:' && !fs.existsSync(dir)) {
@@ -24,7 +25,10 @@ interface Migration {
   up: (database: Database.Database) => void;
 }
 
-const MIGRATIONS: Migration[] = [{ id: 1, name: '001_initial', up: applyInitialSchema }];
+const MIGRATIONS: Migration[] = [
+  { id: 1, name: '001_initial', up: applyInitialSchema },
+  { id: 2, name: '002_automotive', up: applyAutomotiveSchema },
+];
 
 export function migrate(database: Database.Database = db): void {
   database.pragma('foreign_keys = ON');
