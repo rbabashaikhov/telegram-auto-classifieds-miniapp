@@ -1,0 +1,151 @@
+export interface AppConfig {
+  businessName: string;
+  businessType: string;
+  businessVertical: string;
+  appTitle: string;
+  appDescription: string;
+  timezone: string;
+  demoMode: boolean;
+  adminProtected: boolean;
+  currency: string;
+  currencySymbol: string;
+  branding: { accent: string; logoUrl: string | null };
+  mortgage: {
+    defaultRate: number;
+    defaultTermYears: number;
+    defaultDownPercent: number;
+  };
+  features: { demoTour: boolean; demoAdminPreview: boolean };
+}
+
+export interface MatchReason {
+  code: string;
+  label: string;
+  kind: 'match' | 'partial' | 'mismatch';
+  weight: number;
+  points: number;
+}
+
+export interface PropertyCard {
+  id: number;
+  unitNumber: string;
+  rooms: string;
+  roomsCount: number;
+  area: number;
+  floor: number;
+  floorsTotal: number;
+  price: number;
+  finish: string;
+  status: string;
+  completionDate: string;
+  gallery: string[];
+  description: string;
+  features: Array<{ code: string; label: string }>;
+  project: {
+    id: number;
+    slug: string;
+    name: string;
+    district: string;
+    districtLabel: string;
+    address: string;
+    description: string;
+    propertyType: string;
+    completionDate: string;
+    imageUrl: string;
+    features: string[];
+  };
+  match: { score: number; reasons: MatchReason[] } | null;
+  favorited?: boolean;
+}
+
+export interface BuyerProfile {
+  id: number;
+  goal: string;
+  propertyType: string;
+  locations: string[];
+  budgetMin: number;
+  budgetMax: number;
+  rooms: string;
+  purchaseTiming: string;
+  payment: string;
+  mortgageStatus: string | null;
+  preferences: string[];
+  areaMin: number | null;
+  areaMax: number | null;
+}
+
+export interface LeadSummary {
+  id: number;
+  customerId: number;
+  score: number;
+  temperature: 'HOT' | 'WARM' | 'COLD';
+  status: string;
+  customer?: { id: number; name: string; phone?: string | null } | null;
+  budgetMin?: number | null;
+  budgetMax?: number | null;
+  purchaseTiming?: string | null;
+  payment?: string | null;
+  matches?: number;
+  favorites?: number;
+  latestActivity?: { eventType: string; timestamp: string } | null;
+  agent?: { id: number; name: string } | null;
+  scoreBreakdown?: {
+    score: number;
+    temperature: string;
+    profileScore: number;
+    behaviorScore: number;
+    events: Array<{ eventType: string; delta: number; reason: string; scoreAfter: number; createdAt: string }>;
+  };
+}
+
+export interface DashboardKpis {
+  newLeads: number;
+  hotLeads: number;
+  qualificationsCompleted: number;
+  viewingRequests: number;
+}
+
+export interface FunnelAnalytics {
+  funnel: Array<{ key: string; event: string; customers: number }>;
+  conversions: Array<{ from: string | null; to: string; rate: number }>;
+  temperature: { HOT: number; WARM: number; COLD: number };
+  mostViewed: Array<{ propertyId: number; name: string; count: number }>;
+  mostFavorited: Array<{ propertyId: number; name: string; count: number }>;
+  propertyViewingConversion: Array<{
+    propertyId: number;
+    name: string;
+    views: number;
+    viewingRequests: number;
+    conversion: number;
+  }>;
+  averageMatchesPerQualifiedLead: number;
+  leadsByUtmSource: Record<string, number>;
+  leadsByUtmCampaign: Record<string, number>;
+  viewingRequestsByProject: Array<{ projectId: number; name: string; count: number }>;
+}
+
+export interface MortgageResult {
+  price: number;
+  downPayment: number;
+  loanAmount: number;
+  annualRatePercent: number;
+  termYears: number;
+  monthlyPayment: number;
+  totalPayment: number;
+  overpayment: number;
+}
+
+export interface QualificationDraft {
+  goal: string;
+  propertyType: string;
+  locations: string[];
+  budgetMin: number;
+  budgetMax: number;
+  rooms: string;
+  purchaseTiming: string;
+  payment: string;
+  mortgageStatus: string | null;
+  preferences: string[];
+  areaMin: number | null;
+  areaMax: number | null;
+}
