@@ -136,7 +136,7 @@ td a { color: var(--accent); font-weight: 700; }
   .page-title-row { align-items: flex-start; }.my-listing { grid-template-columns: 120px minmax(0, 1fr); }.my-listing > img { width: 120px; height: 90px; }.my-listing-actions { grid-column: 1/-1; grid-template-columns: repeat(2, 1fr); min-width: 0; }.form-step { min-height: 390px; padding: 24px 20px; }.editor-footer { padding: 16px 20px; }.admin-gallery { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 420px) {
-  .listing-grid { grid-template-columns: 1fr; }.listing-card { display: grid; grid-template-columns: 42% minmax(0, 1fr); }.listing-image-wrap { height: 100%; aspect-ratio: auto; }.favorite-button { width: 34px; height: 34px; font-size: 20px; }
+  .listing-grid { grid-template-columns: 1fr; }.listing-card { display: grid; grid-template-columns: 42% minmax(0, 1fr); }.listing-image-wrap { height: 100%; aspect-ratio: auto; }.favorite-button { right: auto; left: calc(42% - 42px); width: 34px; height: 34px; font-size: 20px; }
   .details-layout { display: grid; }.favorite-detail { width: 100%; }.contact-card .primary-button { width: 100%; }.demo-chrome { padding-inline: 10px; }
   .page-title-row { display: grid; }.page-title-row .primary-button { width: 100%; }.my-listing { grid-template-columns: 92px minmax(0, 1fr); padding: 10px; gap: 11px; }.my-listing > img { width: 92px; height: 78px; }.my-listing-main h2 { font-size: 16px; }.my-listing-main p { display: none; }.my-listing-actions { grid-template-columns: 1fr; }.form-grid { grid-template-columns: 1fr; }.photo-editor-grid { grid-template-columns: repeat(2, 1fr); }.editor-footer .primary-button { width: 100%; }.admin-detail-wide { padding: 12px; }.admin-specs { grid-template-columns: 1fr; }
 }
