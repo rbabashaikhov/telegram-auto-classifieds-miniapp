@@ -1,0 +1,47 @@
+# Production service for the shared Mini Apps VPS. Caddy reaches the app over
+# the external network; the application port is intentionally not published.
+name: miniapps-automarket
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: miniapps/automarket:latest
+    container_name: telegram-auto-classifieds
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_PATH: /data/automarket.db
+      UPLOADS_DIR: /data/uploads/listings
+      PUBLIC_DIR: /app/backend/public
+    volumes:
+      - automarket_data:/data
+    networks:
+      - miniapps-net
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  automarket_data:
+
+networks:
+  miniapps-net:
+    external: true

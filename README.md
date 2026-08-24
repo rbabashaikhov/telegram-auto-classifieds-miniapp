@@ -107,9 +107,30 @@ docker run --rm -p 3000:3000 -e ADMIN_TOKEN=automarket-demo telegram-automarket-
 
 SQLite хранится в `/data/automarket.db`, изображения — в `/data/uploads/listings`.
 
+### Production deployment
+
+`compose.production.yaml` запускает один непривилегированный application container в общей внешней сети `miniapps-net`. Порт `3000` только объявлен внутри Docker network и не публикуется на интерфейсах VPS; HTTPS завершается общим reverse proxy.
+
+Production `.env` хранится только на сервере и должен иметь права `0600`. Минимальные параметры:
+
+```dotenv
+NODE_ENV=production
+APP_URL=https://automarket.example.com
+DATABASE_PATH=/data/automarket.db
+UPLOADS_DIR=/data/uploads/listings
+ALLOW_DEMO_MODE=true
+PAYMENT_PROVIDER=demo
+ALLOW_DEMO_PAYMENTS=true
+FEATURE_DEMO_TOUR=true
+FEATURE_DEMO_ADMIN_PREVIEW=true
+ADMIN_TOKEN=<separate random value of at least 32 bytes>
+```
+
+Не коммитьте production `.env`, admin token, reverse-proxy credentials или данные из persistent volume. Named volume `miniapps-automarket_automarket_data` сохраняет SQLite и uploads при restart/redeploy. Перед изменением общего reverse proxy сделайте backup его конфигурации, проверьте новую конфигурацию и только затем выполните graceful reload.
+
 ## Known limitations
 
-Нет реального эквайринга, refunds, VIN decoding, внешних автомобильных баз, чата, продвижения, дилерских аккаунтов, subscription billing, сложной revision system и production deploy. Контакт продавца остаётся demo-safe placeholder.
+Нет реального эквайринга, refunds, VIN decoding, внешних автомобильных баз, чата, продвижения, дилерских аккаунтов, subscription billing, сложной revision system и автоматизированного deployment pipeline. Контакт продавца остаётся demo-safe placeholder.
 
 Локальные иллюстрации автомобилей — нейтральные SVG demo assets, а не фотографии реальных объявлений. Они намеренно не используют внешние hotlinks или снимки маркетплейсов.
 

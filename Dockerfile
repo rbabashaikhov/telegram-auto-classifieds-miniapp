@@ -42,7 +42,8 @@ RUN npm ci --omit=dev
 COPY --from=build /app/backend/dist ./backend/dist
 COPY --from=build /app/frontend/dist ./backend/public
 
-RUN mkdir -p /data
+RUN mkdir -p /data/uploads/listings \
+  && chown -R node:node /data
 
 ENV NODE_ENV=production
 ENV DATABASE_PATH=/data/automarket.db
@@ -54,6 +55,8 @@ ENV TZ=Europe/Moscow
 ENV DATA_MODE=local
 
 EXPOSE 3000
+
+USER node
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
   CMD wget -qO- http://127.0.0.1:3000/api/health || exit 1
